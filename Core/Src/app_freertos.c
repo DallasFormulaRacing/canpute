@@ -188,9 +188,9 @@ void Start_canfdTXTask(void *argument)
     nodeData.linPotData += 1; //just for testing, increment the value each cycle
 	  memcpy(FDCAN2_txMessageData, &nodeData, sizeof(NodeDataTypeDef));
 	  osMutexRelease(nodeDataMutexHandle);
-	if(HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2,&FDCAN2_TxHeader,FDCAN2_txMessageData) != HAL_OK){
-		Error_Handler();
-	}
+    if(HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2,&FDCAN2_TxHeader,FDCAN2_txMessageData) != HAL_OK){
+      Error_Handler();
+    }
 
     osDelay(100);
   }
