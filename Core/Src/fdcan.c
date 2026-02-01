@@ -135,42 +135,5 @@ void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* fdcanHandle)
 }
 
 /* USER CODE BEGIN 1 */
-void initFDCANTransmissionHeader(FDCAN_TxHeaderTypeDef *tx_header) {
-	tx_header->IdType = FDCAN_EXTENDED_ID;
-	tx_header->TxFrameType = FDCAN_DATA_FRAME;
-	tx_header->DataLength = FDCAN_DLC_BYTES_16;
-	tx_header->ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-	tx_header->BitRateSwitch = FDCAN_BRS_ON;
-	tx_header->FDFormat = FDCAN_FD_CAN;
-	tx_header->TxEventFifoControl = FDCAN_NO_TX_EVENTS;
-	tx_header->MessageMarker = 0;
-}
-void configureFDCANTransmissionHeader(FDCAN_TxHeaderTypeDef *tx_header, uint32_t ID, uint32_t DLC_BYTES) {
-	tx_header->Identifier = ID;
-	tx_header->DataLength = DLC_BYTES;
-}
-/* 
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
-	if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
-		// Retrieve RX messages from RX FIFO0 
-		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader,
-				rxMessageData) != HAL_OK) {
-			// Reception Error
-			Error_Handler();
-		}
-		receivedFrame = 1;
-		if (HAL_FDCAN_ActivateNotification(hfdcan,
-		FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
-			// Notification Error
-			Error_Handler();
-		}
-	}
-}
-*/
 
-/*
-void configureDualIDFDCANFilter(FDCAN_FilterTypeDef *filter_config,uint32_t ID1,uint32_t ID2){
-
-}
-*/
 /* USER CODE END 1 */

@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     App/Src/command_handler.c
     App/Src/node_tasks.c
+    App/Src/can_utils.c
 )
 
 # Add include paths

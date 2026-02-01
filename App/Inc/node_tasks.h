@@ -9,6 +9,7 @@
 // Task Prototypes
 void Start_canfdTXTask(void *argument);
 void Start_rpmEvalTask(void *argument);
+void Update_Simulated_Sensors(void);
 
 // External handles provided by CubeMX
 extern osMutexId_t nodeDataMutexHandle;
