@@ -27,18 +27,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct __attribute__((packed)){
-	uint32_t linPotData; //4 bytes
-	uint32_t wheelSpeed; //4 bytes
-	uint32_t fillerData4bytes; //4 bytes
-	uint16_t fillerData2bytes; //2 bytes
-	uint8_t brakeTemperature; //1 byte
-	uint8_t tireTemperature; //1 byte
-
-
-	// total = 16 bytes i guess!
-
-}NodeDataTypeDef;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -52,17 +40,7 @@ typedef struct __attribute__((packed)){
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-FDCAN_TxHeaderTypeDef FDCAN2_TxHeader;
-FDCAN_RxHeaderTypeDef FDCAN2_RxHeader;
-uint8_t FDCAN2_txMessageData[16]; //set to 16 bytes for now
-uint8_t FDCAN2_rxMessageData[64];
-NodeDataTypeDef nodeData;
-float wheelSpeedQueueMsg = 0;
-/*
-volatile float rpm_current = 0.0f;         // EMA RPM
-volatile float rpm_instantaneous = 0.0f;
-volatile float rpm_dt = 0.0f;
-*/
+
 
 /* USER CODE END Variables */
 /* Definitions for canfdTXTask */
@@ -174,26 +152,10 @@ void MX_FREERTOS_Init(void) {
 * @retval None
 */
 /* USER CODE END Header_Start_canfdTXTask */
-void Start_canfdTXTask(void *argument)
+__weak void Start_canfdTXTask(void *argument)
 {
   /* USER CODE BEGIN canfdTXTask */
-	initFDCANTransmissionHeader(&FDCAN2_TxHeader);
-	uint32_t canfd_message_extended_id = 0x000;
-
-  /* Infinite loop */
-  for(;;)
-  {
-	  configureFDCANTransmissionHeader(&FDCAN2_TxHeader,canfd_message_extended_id,FDCAN_DLC_BYTES_16); //16 byte data size
-	  osMutexAcquire(nodeDataMutexHandle,osWaitForever);
-    nodeData.linPotData += 1; //just for testing, increment the value each cycle
-	  memcpy(FDCAN2_txMessageData, &nodeData, sizeof(NodeDataTypeDef));
-	  osMutexRelease(nodeDataMutexHandle);
-    if(HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2,&FDCAN2_TxHeader,FDCAN2_txMessageData) != HAL_OK){
-      Error_Handler();
-    }
-
-    osDelay(100);
-  }
+	
   /* USER CODE END canfdTXTask */
 }
 
@@ -204,32 +166,11 @@ void Start_canfdTXTask(void *argument)
 * @retval None
 */
 /* USER CODE END Header_Start_rpmEvalTask */
-void Start_rpmEvalTask(void *argument)
+__weak void Start_rpmEvalTask(void *argument)
 {
   /* USER CODE BEGIN rpmEvalTask */
 
-  /* Infinite loop */
-	for (;;)
-	{
-	    if (osMessageQueueGet(wheelSpeedFrequencyHandle, &wheelSpeedQueueMsg, NULL, osWaitForever) != osOK)
-	    {
-	      Error_Handler();
-	    }
-	    else
-	    {
-	      /* Check if it is the correct message */
-	      if(wheelSpeedQueueMsg > 0.0f)
-	      {
-	        /* Toggle LED1 (LED_GREEN) */
-	    	  osMutexAcquire(nodeDataMutexHandle,osWaitForever);
-	    	  nodeData.wheelSpeed = wheelSpeedQueueMsg;
-	    	  osMutexRelease(nodeDataMutexHandle);
-
-	        HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-	      }
-	    }
-
-	}
+  
   /* USER CODE END rpmEvalTask */
 }
 

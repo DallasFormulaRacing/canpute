@@ -100,6 +100,9 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* fdcanHandle)
     GPIO_InitStruct.Alternate = GPIO_AF9_FDCAN2;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* FDCAN2 interrupt Init */
+    HAL_NVIC_SetPriority(FDCAN2_IT0_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
   /* USER CODE BEGIN FDCAN2_MspInit 1 */
 
   /* USER CODE END FDCAN2_MspInit 1 */
@@ -123,6 +126,8 @@ void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* fdcanHandle)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_12|GPIO_PIN_13);
 
+    /* FDCAN2 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
   /* USER CODE BEGIN FDCAN2_MspDeInit 1 */
 
   /* USER CODE END FDCAN2_MspDeInit 1 */
@@ -144,6 +149,25 @@ void configureFDCANTransmissionHeader(FDCAN_TxHeaderTypeDef *tx_header, uint32_t
 	tx_header->Identifier = ID;
 	tx_header->DataLength = DLC_BYTES;
 }
+/* 
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+	if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
+		// Retrieve RX messages from RX FIFO0 
+		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader,
+				rxMessageData) != HAL_OK) {
+			// Reception Error
+			Error_Handler();
+		}
+		receivedFrame = 1;
+		if (HAL_FDCAN_ActivateNotification(hfdcan,
+		FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+			// Notification Error
+			Error_Handler();
+		}
+	}
+}
+*/
+
 /*
 void configureDualIDFDCANFilter(FDCAN_FilterTypeDef *filter_config,uint32_t ID1,uint32_t ID2){
 

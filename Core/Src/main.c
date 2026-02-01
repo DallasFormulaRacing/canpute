@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app_freertos.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RX_FILTER_ID 0x321; //Example Identifier we want to allow through filter!
+#define RX_FILTER_ID 0x000; //Example Identifier we want to allow through filter!
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/

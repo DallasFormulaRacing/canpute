@@ -41,8 +41,10 @@ extern FDCAN_HandleTypeDef hfdcan2;
 void MX_FDCAN2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+
 void initFDCANTransmissionHeader(FDCAN_TxHeaderTypeDef *tx_header);
 void configureFDCANTransmissionHeader(FDCAN_TxHeaderTypeDef *tx_header, uint32_t ID, uint32_t DLC_BYTES);
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs);
 
 /* USER CODE END Prototypes */
 
