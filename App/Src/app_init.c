@@ -42,21 +42,35 @@ void Identify_Self(void) {
  * @brief Configures the FDCAN hardware filters for Targeted and Broadcast IDs
  */
 void Configure_FDCAN_Filters(void) {
-    FDCAN_FilterTypeDef sFilterConfig;
+    FDCAN_FilterTypeDef filter1;
+    filter1.IdType       = FDCAN_EXTENDED_ID;
+    filter1.FilterIndex  = 0;
+    filter1.FilterType   = FDCAN_FILTER_MASK; // Use the standard HAL define
+    filter1.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 
-    sFilterConfig.IdType       = FDCAN_EXTENDED_ID;
-    sFilterConfig.FilterIndex  = 0;
-    sFilterConfig.FilterType   = FDCAN_FILTER_DUAL;
-    sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FDCAN_FilterTypeDef filter2;
+    filter2.IdType       = FDCAN_EXTENDED_ID;
+    filter2.FilterIndex  = 1;
+    filter2.FilterType   = FDCAN_FILTER_MASK;
+    filter2.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 
-    /* Filter 1: Targeted specifically to THIS node */
-    /* Shifted to match bits 25-21 in our 29-bit ID layout */
-    sFilterConfig.FilterID1 = (uint32_t)self_node_id << 21;
+    // The Mask: 5 bits set at position 21
+    // 0x1F << 21 = 0x03E00000
+    uint32_t targetIDMask = (0x1F << 21);
 
-    /* Filter 2: Targeted to ALL DAQ nodes (0x01) */
-    sFilterConfig.FilterID2 = (uint32_t)NODE_ID_ALL_NODES << 21;
+    // Filter for messages addressed specifically to this node
+    // Priority, Command, and Source are 0 because the Mask will ignore them
+    filter1.FilterID1 = (uint32_t)self_node_id << 21; 
+    filter1.FilterID2 = targetIDMask;
 
-    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &sFilterConfig) != HAL_OK) {
+    // Filter for Broadcast messages (ALL DAQ NODES)
+    filter2.FilterID1 = (uint32_t)NODE_ID_ALL_NODES << 21;
+    filter2.FilterID2 = targetIDMask;
+
+    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &filter1) != HAL_OK) {
+        Error_Handler();
+    }
+    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &filter2) != HAL_OK) {
         Error_Handler();
     }
 }

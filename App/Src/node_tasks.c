@@ -57,7 +57,7 @@ void Start_canfdTXTask(void *argument)
 
         osMutexAcquire(nodeDataMutexHandle, osWaitForever);
         // Transmit to Pi using our Priority 2, Target Pi ID, and DAQ Command 
-        CAN_Transmit(2, NODE_ID_RASPI, CMD_ID_SENDING_DATA, (uint8_t*)&nodeData, FDCAN_DLC_BYTES_16);
+        //CAN_Transmit(2, NODE_ID_RASPI, CMD_ID_SENDING_DATA, (uint8_t*)&nodeData, FDCAN_DLC_BYTES_16);
         osMutexRelease(nodeDataMutexHandle);
     }
 }

@@ -23,7 +23,6 @@
 #include "icache.h"
 #include "tim.h"
 #include "gpio.h"
-#include "app_init.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
