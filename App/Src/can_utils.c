@@ -18,14 +18,26 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
     tx_header->MessageMarker = 0;
 }
 
+
 /**
- * @brief Logic-heavy transmission wrapper
+ * @brief Logic-heavy transmission wrapper for the new 29-bit ID structure
+ * @param priority 3-bit priority (0-7, 0 is highest)
+ * @param target   5-bit Target Device ID (e.g., NODE_ID_ALL_NODES or a specific node)
+ * @param cmd_type 16-bit Command/Data Type identifier
+ * @param pData    Pointer to the data payload (max 64 bytes for CAN FD)
+ * @param dlc_bytes The FDCAN_DLC_BYTES_XX macro representing the payload size
  */
-HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
+HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
     FDCAN_TxHeaderTypeDef txHeader;
+    
+    // Use the internal helper to set up fixed FD/Extended settings
     CAN_InitHeader(&txHeader); 
     
-    txHeader.Identifier = BUILD_CAN_ID(priority, cmd_type, self_node_id);
+    // Build the 29-bit ID: [Priority][Target][Command][Source]
+    // self_node_id is the 'Source' established during App_Hardware_Init
+    txHeader.Identifier = BUILD_CAN_ID(priority, target, cmd_type, self_node_id);
+    
+    // Set the data length (must be an FDCAN_DLC_BYTES_x macro)
     txHeader.DataLength = dlc_bytes;
 
     return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, pData);

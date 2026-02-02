@@ -23,6 +23,7 @@
 #include "icache.h"
 #include "tim.h"
 #include "gpio.h"
+#include "app_init.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -99,39 +100,7 @@ int main(void)
   MX_ICACHE_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
-
-  //RX_FILTER_ID defined in  * main.c *
-  FDCAN_FilterTypeDef        sFilterConfig;
-  sFilterConfig.IdType       = FDCAN_EXTENDED_ID;
-  sFilterConfig.FilterIndex  = 0U;
-  sFilterConfig.FilterType   = FDCAN_FILTER_DUAL;
-  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  sFilterConfig.FilterID1    = RX_FILTER_ID;
-  sFilterConfig.FilterID2    = RX_FILTER_ID; /* For acceptance, MessageID and FilterID1 must match exactly */
-
-  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &sFilterConfig) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-  /**
-   *  Configure global filter:
-   *    - Reject all remote frames with STD and EXT ID
-   *    - Reject non matching frames with STD ID and EXT ID
-   */
-  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,
-		  FDCAN_REJECT, FDCAN_REJECT,
-		  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-  /* Start FDCAN controller */
-  if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
-  {
-	  Error_Handler();
-  }
+  App_Hardware_Init();
 
   /* USER CODE END 2 */
 

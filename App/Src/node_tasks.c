@@ -1,9 +1,10 @@
 #include "node_tasks.h"
-#include "commands.h"
+#include "command_handler.h"
 #include "can_utils.h"
 #include "types.h"
 #include "cmsis_os2.h"
 #include <string.h>
+
 
 
 FDCAN_TxHeaderTypeDef FDCAN2_TxHeader;
@@ -13,93 +14,75 @@ uint8_t FDCAN2_rxMessageData[64];
 NodeDataTypeDef nodeData;
 float wheelSpeedQueueMsg = 0;
 
+extern osEventFlagsId_t systemEventFlagsHandle;
+
+extern osTimerId_t standaloneTimerHandle;
+
 /*
 volatile float rpm_current = 0.0f;         // EMA RPM
 volatile float rpm_instantaneous = 0.0f;
 volatile float rpm_dt = 0.0f;
 */
 
-// Registry of all physical nodes on the car
-static const UID_Mapping_t Fleet_Table[] = {
-    {{0x12345678, 0xABCDEF01, 0x55667788}, NODE_ID_FRONT_LEFT},
-    {{0x87654321, 0x10FEDCBA, 0x99887766}, NODE_ID_FRONT_RIGHT},
-    {{0x11223344, 0x55667788, 0x99AABBCC}, NODE_ID_REAR_LEFT},
-    {{0x44332211, 0x88776655, 0xCCBBAA99}, NODE_ID_REAR_RIGHT},
-    {{0x001E005F, 0x33335101, 0x32313831}, NODE_ID_NUCLEO_1},
-    {{0x4D3C2B1A, 0x80706050, 0x40302010}, NODE_ID_NUCLEO_2},
-    {{0xDEADBEEF, 0xCAFEBABE, 0xFEEDFACE}, NODE_ID_DASH}
-};
-
-NodeHardwareID_t self_node_id = NODE_ID_UNKNOWN;
-
-void Identify_Self(void) {
-    uint32_t current_uid[3];
-    
-    // Using HAL functions for H5 series
-    current_uid[0] = HAL_GetUIDw0();
-    current_uid[1] = HAL_GetUIDw1();
-    current_uid[2] = HAL_GetUIDw2();
-
-    for (int i = 0; i < sizeof(Fleet_Table)/sizeof(UID_Mapping_t); i++) {
-        if (current_uid[0] == Fleet_Table[i].uid[0] &&
-            current_uid[1] == Fleet_Table[i].uid[1] &&
-            current_uid[2] == Fleet_Table[i].uid[2]) {
-            
-            self_node_id = Fleet_Table[i].nodeType;
-            return;
-        }
-    }
-    
-    self_node_id = NODE_ID_UNKNOWN; // Node not recognized
-}
 
 
 void Start_canfdTXTask(void *argument)
 {
-  /* USER CODE BEGIN canfdTXTask */
-    Identify_Self();
+    uint32_t flags;
+    uint32_t timeout = 5000; // Start with a 5s wait for Pi boot
     
+    // Initial Mode
+    CAN_SystemMode_t current_mode = MODE_STARTUP;
 
-  /* Infinite loop */
-  for(;;) {
-    Update_Simulated_Sensors();
-    
-    osMutexAcquire(nodeDataMutexHandle, osWaitForever);
-    
-    // Send 16 bytes of DAQ data with Priority 2 and Command Type 
-    CAN_Transmit(2, 0x000ABC, (uint8_t*)&nodeData, FDCAN_DLC_BYTES_16);
-    
-    osMutexRelease(nodeDataMutexHandle);
-    osDelay(100);
-}
+    for(;;) {
+        // Wait for Pi Sync or the 60Hz Standalone Timer
+        flags = osEventFlagsWait(systemEventFlagsHandle, 
+                                 FLAG_PI_SYNC | FLAG_TIMER_TICK, 
+                                 osFlagsWaitAny, timeout);
 
+        //State Transitions
+        if (flags & FLAG_PI_SYNC) {
+            current_mode = MODE_PI_LINKED;
+            timeout = 500; // Falling back to Standalone if Pi is silent for 500ms
+            osTimerStop(standaloneTimerHandle); // Stop standalone pulses while Pi is active
+        } 
+        else if ((flags & FLAG_TIMER_TICK) || (flags == (uint32_t)osErrorTimeout)) {
+            current_mode = MODE_STANDALONE;
+            timeout = osWaitForever; // Controlled by the standaloneTimerHandle callback
+            osTimerStart(standaloneTimerHandle, 16U); // Ensure 60Hz heartbeat
+        }
+
+        //Execution
+        Update_Simulated_Sensors();
+
+        osMutexAcquire(nodeDataMutexHandle, osWaitForever);
+        // Transmit to Pi using our Priority 2, Target Pi ID, and DAQ Command 
+        CAN_Transmit(2, NODE_ID_RASPI, CMD_ID_SENDING_DATA, (uint8_t*)&nodeData, FDCAN_DLC_BYTES_16);
+        osMutexRelease(nodeDataMutexHandle);
+    }
 }
 
 
 void Start_rpmEvalTask(void *argument)
 {
-  /* USER CODE BEGIN rpmEvalTask */
+  float rxFrequency = 0;
+  for (;;)
+  {
+    // Wait for 500ms. Car is stopped if no pulses received.
+    osStatus_t status = osMessageQueueGet(wheelSpeedFrequencyHandle, &rxFrequency, NULL, 500);
 
-  /* Infinite loop */
-	for (;;)
-	{
-	    if (osMessageQueueGet(wheelSpeedFrequencyHandle, &wheelSpeedQueueMsg, NULL, osWaitForever) != osOK)
-	    {
-	      Error_Handler();
-	    }
-	    else
-	    {
-	      /* Check if it is the correct message */
-	      if(wheelSpeedQueueMsg > 0.0f)
-	      {
-	        /* Toggle LED1 (LED_GREEN) */
-	    	  osMutexAcquire(nodeDataMutexHandle,osWaitForever);
-	    	  nodeData.wheelSpeed = wheelSpeedQueueMsg;
-	    	  osMutexRelease(nodeDataMutexHandle);
-	      }
-	    }
-
-	}
+    osMutexAcquire(nodeDataMutexHandle, osWaitForever);
+    if (status == osOK) {
+        nodeData.wheelSpeed = (uint32_t)rxFrequency; // Convert freq to RPM/Speed as needed
+    } else {
+        nodeData.wheelSpeed = 0; // Timeout reached, car is stopped
+    }
+    osMutexRelease(nodeDataMutexHandle);
+  }
+}
+void StandaloneTimer_Callback(void *argument)
+{
+  osEventFlagsSet(systemEventFlagsHandle, FLAG_TIMER_TICK);
 }
 void Update_Simulated_Sensors(void) {
     uint32_t tick = HAL_GetTick();
@@ -107,7 +90,7 @@ void Update_Simulated_Sensors(void) {
     if (osMutexAcquire(nodeDataMutexHandle, osWaitForever) == osOK) {
         // 4-byte fields: Use a counter or sine-wave simulation
         nodeData.linPotData = (tick / 10) % 4096;      // Simulates 12-bit ADC travel
-        nodeData.wheelSpeed = (tick / 50) % 200;       // Simulates 0-200 units
+        //nodeData.wheelSpeed = (tick / 50) % 200;       // Simulates 0-200 units
 
         // 2-byte and 1-byte fields: Use bitwise shifts of the tick
         nodeData.fillerData4bytes = tick;
