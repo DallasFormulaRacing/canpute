@@ -12,7 +12,6 @@ typedef enum {
     CMD_ID_SENDING_DATA     = 0x051, 
     CMD_ID_RESET_NODE       = 0x099,
     
-    // New Test Commands
     CMD_ID_SET_LED          = 0x100, // Data[0]: 0=Off, 1=On
     CMD_ID_SET_FREQ         = 0x101, // Data[0]: New Standalone frequency in Hz
     CMD_ID_RESET_SIM        = 0x102, // No data: Resets the simulated sensor counters
