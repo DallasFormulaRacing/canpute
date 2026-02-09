@@ -19,15 +19,15 @@ typedef struct __attribute__((packed)){
 } NodeDataTypeDef;
 typedef enum {
     NODE_ID_ALL_NODES   = 0x01, // 00001 (Broadcast)
-    NODE_ID_FRONT_LEFT  = 0x02, // 00001
-    NODE_ID_FRONT_RIGHT = 0x03, // 00010
-    NODE_ID_REAR_LEFT   = 0x04, // 00011
-    NODE_ID_REAR_RIGHT  = 0x05, // 00100
+    NODE_ID_FRONT_LEFT  = 0x02, // 00010
+    NODE_ID_FRONT_RIGHT = 0x03, // 00011
+    NODE_ID_REAR_LEFT   = 0x04, // 00100
+    NODE_ID_REAR_RIGHT  = 0x05, // 00101
 
-    NODE_ID_NUCLEO_1    = 0x06, // 01010
-    NODE_ID_NUCLEO_2    = 0x07, // 01011
-    NODE_ID_RASPI       = 0x1E, // 11110
-    NODE_ID_DASH        = 0x1F, // 11111 (Node 31)
+    NODE_ID_NUCLEO_1    = 0x06, // 00110
+    NODE_ID_NUCLEO_2    = 0x07, // 00111
+    NODE_ID_RASPI       = 0x1E, // 11110 (Node 30, reserved for Raspberry Pi)
+    NODE_ID_DASH        = 0x1F, // 11111 (Node 31, reserved for Dashboard)
     NODE_ID_UNKNOWN     = 0x00
 } NodeHardwareID_t;
 

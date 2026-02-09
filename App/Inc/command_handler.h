@@ -8,6 +8,8 @@
 
 typedef enum {
     CMD_ID_PING             = 0x001,
+    CMD_ID_PONG             = 0x060,
+    CMD_ID_GET_RANDOM       = 0x049, // For testing: Node responds with random data,
     CMD_ID_REQ_DATA         = 0x050, 
     CMD_ID_SENDING_DATA     = 0x051, 
     CMD_ID_RESET_NODE       = 0x099,
@@ -20,7 +22,7 @@ typedef enum {
 
 /**
  * @brief Dispatches incoming CAN messages to specific handling functions.
- * @param cmd_id The Identifier of the received CAN frame.
+ * @param ext_id The Identifier of the received CAN frame.
  * @param data   Pointer to the CAN frame data payload.
  */
 void Process_CAN_Command(uint32_t ext_id, uint8_t* data);

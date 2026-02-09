@@ -30,15 +30,18 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
 HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
     FDCAN_TxHeaderTypeDef txHeader;
     
-    // Use the internal helper to set up fixed FD/Extended settings
     CAN_InitHeader(&txHeader); 
     
-    // Build the 29-bit ID: [Priority][Target][Command][Source]
-    // self_node_id is the 'Source' established during App_Hardware_Init
+    // Identifier built as: [Priority][Target][Command][Source]
     txHeader.Identifier = BUILD_CAN_ID(priority, target, cmd_type, self_node_id);
-    
-    // Set the data length (must be an FDCAN_DLC_BYTES_x macro)
     txHeader.DataLength = dlc_bytes;
+
+    // Safety: HAL_FDCAN_AddMessageToTxFifoQ will fail if pData is NULL 
+    // unless the DLC is 0. 
+    if (dlc_bytes == FDCAN_DLC_BYTES_0) {
+        // Pass a dummy pointer or NULL; HAL ignores pData if DLC is 0
+        return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, NULL);
+    }
 
     return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, pData);
 }
