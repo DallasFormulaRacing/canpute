@@ -1,0 +1,7 @@
+/Users/sebastianschommer/Vsc/STMprojs/canpute/CMakeFiles/canpute.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/CMakeFiles/edit_cache.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/CMakeFiles/rebuild_cache.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake/stm32cubemx/CMakeFiles/RTOS2.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
+/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir

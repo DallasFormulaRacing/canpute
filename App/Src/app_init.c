@@ -3,7 +3,7 @@
 #include "fdcan.h"
 #include "tim.h"
 #include <string.h>
-
+uint32_t current_uid[3];
 // Internal Registry of all physical nodes
 static const UID_Mapping_t Fleet_Table[] = {
     {{0x12345678, 0xABCDEF01, 0x55667788}, NODE_ID_FRONT_LEFT},
@@ -11,14 +11,14 @@ static const UID_Mapping_t Fleet_Table[] = {
     {{0x11223344, 0x55667788, 0x99AABBCC}, NODE_ID_REAR_LEFT},
     {{0x44332211, 0x88776655, 0xCCBBAA99}, NODE_ID_REAR_RIGHT},
     {{0x001E005F, 0x33335101, 0x32313831}, NODE_ID_NUCLEO_1},
-    {{0x4D3C2B1A, 0x80706050, 0x40302010}, NODE_ID_NUCLEO_2},
+    {{4522020, 859001089, 842086449}, NODE_ID_NUCLEO_2},
     {{0xDEADBEEF, 0xCAFEBABE, 0xFEEDFACE}, NODE_ID_DASH}
 };
 
 NodeHardwareID_t self_node_id = NODE_ID_UNKNOWN;
 
 void Identify_Self(void) {
-    uint32_t current_uid[3];
+    
     
     current_uid[0] = HAL_GetUIDw0();
     current_uid[1] = HAL_GetUIDw1();

@@ -27,7 +27,8 @@ typedef enum {
     NODE_ID_NUCLEO_1    = 0x06, // 00110
     NODE_ID_NUCLEO_2    = 0x07, // 00111
     NODE_ID_RASPI       = 0x1E, // 11110 (Node 30, reserved for Raspberry Pi)
-    NODE_ID_DASH        = 0x1F, // 11111 (Node 31, reserved for Dashboard)
+    NODE_ID_DASH        = 0x1D, //  11101 (Node 29, reserved for Dashboard)
+    NODE_ID_BMS         = 0x1F, // 11111 (Node 31, reserved for Battery Management System)
     NODE_ID_UNKNOWN     = 0x00
 } NodeHardwareID_t;
 

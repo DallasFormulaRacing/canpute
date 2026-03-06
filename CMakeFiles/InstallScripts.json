@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake_install.cmake",
+		"/Users/sebastianschommer/Vsc/STMprojs/canpute/cmake/stm32cubemx/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
