@@ -17,7 +17,6 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
     CommandID_t command  = (CommandID_t)((ext_id >> 5) & 0xFFFF);
     uint8_t  target_id = (ext_id >> 21) & 0x1F;
 
-    (void)source_id; 
     (void)target_id;
 
     switch(command) {
@@ -75,6 +74,16 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             CAN_Transmit(1, NODE_ID_RASPI, CMD_ID_GET_RANDOM, resp_data, FDCAN_DLC_BYTES_4);
             break;
         }
+        case BL_CMD_PING: {
+            // Reply with data[0]=1 meaning "in application"
+            uint8_t ping_resp = 1;
+            CAN_Transmit(1, source_id, BL_CMD_PING, &ping_resp, FDCAN_DLC_BYTES_1);
+            break;
+        }
+        case BL_CMD_REBOOT:
+            // Reboot into bootloader
+            HAL_NVIC_SystemReset();
+            break;
         default:
             break;
     }

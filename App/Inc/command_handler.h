@@ -17,7 +17,11 @@ typedef enum {
     CMD_ID_SET_LED          = 0x100, // Data[0]: 0=Off, 1=On
     CMD_ID_SET_FREQ         = 0x101, // Data[0]: New Standalone frequency in Hz
     CMD_ID_RESET_SIM        = 0x102, // No data: Resets the simulated sensor counters
-    CMD_ID_SET_OFFSET       = 0x103  // Data[0-3]: uint32_t offset for LinPot data
+    CMD_ID_SET_OFFSET       = 0x103, // Data[0-3]: uint32_t offset for LinPot data
+
+    // Bootloader commands (shared with ezfdbootloader protocol)
+    BL_CMD_PING             = 0x040, // Ping: reply data[0]=0 (bootloader) or 1 (app)
+    BL_CMD_REBOOT           = 0x04D  // Reboot into bootloader
 } CommandID_t;
 
 /**
