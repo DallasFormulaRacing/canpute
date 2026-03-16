@@ -1,13 +1,79 @@
 #include "command_handler.h"
-#include "commands.h"
-#include "node_tasks.h"
-#include "cmsis_os2.h"
+#include "app_globals.h"
+#include "can_utils.h"
+#include "main.h"
+#include <string.h>
 
+void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
+    uint8_t  source_id = ext_id & 0x1F;
+    CommandID_t command  = (CommandID_t)((ext_id >> 5) & 0xFFFF);
+    uint8_t  target_id = (ext_id >> 21) & 0x1F;
 
+    (void)target_id;
 
-void Process_CAN_Command(uint32_t cmd_id, uint8_t* data) {
-    switch(cmd_id) {
-        case CMD_ID_REQ_DATA:
+    switch(command) {
+        case CMD_ID_REQ_DATA: 
+            osEventFlagsSet(systemEventFlagsHandle, FLAG_PI_SYNC);
+            break;
+
+        case CMD_ID_SET_LED:
+            if (data[0] == 1) HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_SET);
+            else HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_RESET);
+            break;
+
+        case CMD_ID_SET_FREQ:
+            if (data[0] > 0 && data[0] <= 100) { // Limit 1-100Hz for safety
+                uint32_t period_ms = 1000 / data[0];
+                osTimerStop(standaloneTimerHandle);
+                osTimerStart(standaloneTimerHandle, period_ms);
+            }
+            break;
+
+        case CMD_ID_RESET_SIM:
+            osMutexAcquire(nodeDataMutexHandle, osWaitForever);
+            memset(&nodeData, 0, sizeof(NodeDataTypeDef));
+            osMutexRelease(nodeDataMutexHandle);
+            break;
+
+        case CMD_ID_SET_OFFSET:
+            osMutexAcquire(nodeDataMutexHandle, osWaitForever);
+            // Reconstruct uint32 from bytes (Little Endian)
+            uint32_t offset = (uint32_t)data[0] | ((uint32_t)data[1] << 8) | 
+                              ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+            nodeData.fillerData4bytes = offset; // Use a filler field for testing
+            osMutexRelease(nodeDataMutexHandle);
+            break;
+
+        case CMD_ID_RESET_NODE:
+            HAL_NVIC_SystemReset();
+            break;  
+        case CMD_ID_PING:
+            // No payload needed for ping command
+            CAN_Transmit(1, NODE_ID_RASPI, CMD_ID_PONG, NULL, FDCAN_DLC_BYTES_0);
+            break;
+        case CMD_ID_GET_RANDOM: {
+            uint32_t random_val;
+            extern RNG_HandleTypeDef hrng;
+            HAL_RNG_GenerateRandomNumber(&hrng, &random_val);
+            uint8_t resp_data[4];
+            resp_data[0] = (uint8_t)(random_val & 0xFF);
+            resp_data[1] = (uint8_t)((random_val >> 8) & 0xFF);
+            resp_data[2] = (uint8_t)((random_val >> 16) & 0xFF);
+            resp_data[3] = (uint8_t)((random_val >> 24) & 0xFF);
+
+            // Transmit back to Pi (Source 0x1E)
+            CAN_Transmit(1, NODE_ID_RASPI, CMD_ID_GET_RANDOM, resp_data, FDCAN_DLC_BYTES_4);
+            break;
+        }
+        case BL_CMD_PING: {
+            // Reply with data[0]=1 meaning "in application"
+            uint8_t ping_resp = 1;
+            CAN_Transmit(1, source_id, BL_CMD_PING, &ping_resp, FDCAN_DLC_BYTES_1);
+            break;
+        }
+        case BL_CMD_REBOOT:
+            // Reboot into bootloader
+            HAL_NVIC_SystemReset();
             break;
         default:
             break;

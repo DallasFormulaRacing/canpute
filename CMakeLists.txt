@@ -43,11 +43,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add sources to executable
+file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "App/Src/*.c")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    App/Src/command_handler.c
-    App/Src/node_tasks.c
-    App/Src/can_utils.c
+    ${APP_SOURCES}
 )
 
 # Add include paths
@@ -69,4 +68,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+)
+
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME}.elf ${CMAKE_PROJECT_NAME}
+)
+
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_SIZE} --format=berkeley ${CMAKE_PROJECT_NAME}.elf
+    COMMENT "Memory Usage Report:"
 )

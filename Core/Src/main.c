@@ -20,7 +20,9 @@
 #include "main.h"
 #include "cmsis_os2.h"
 #include "fdcan.h"
+#include "i2c.h"
 #include "icache.h"
+#include "rng.h"
 #include "tim.h"
 #include "gpio.h"
 
@@ -70,7 +72,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  __enable_irq();
 
+  HAL_RCC_DeInit();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -97,41 +101,11 @@ int main(void)
   MX_FDCAN2_Init();
   MX_TIM3_Init();
   MX_ICACHE_Init();
+  MX_RNG_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
-
-  //RX_FILTER_ID defined in  * main.c *
-  FDCAN_FilterTypeDef        sFilterConfig;
-  sFilterConfig.IdType       = FDCAN_EXTENDED_ID;
-  sFilterConfig.FilterIndex  = 0U;
-  sFilterConfig.FilterType   = FDCAN_FILTER_DUAL;
-  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  sFilterConfig.FilterID1    = RX_FILTER_ID;
-  sFilterConfig.FilterID2    = RX_FILTER_ID; /* For acceptance, MessageID and FilterID1 must match exactly */
-
-  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &sFilterConfig) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-  /**
-   *  Configure global filter:
-   *    - Reject all remote frames with STD and EXT ID
-   *    - Reject non matching frames with STD ID and EXT ID
-   */
-  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,
-		  FDCAN_REJECT, FDCAN_REJECT,
-		  FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-  /* Start FDCAN controller */
-  if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
-  {
-	  Error_Handler();
-  }
+  App_Hardware_Init();
 
   /* USER CODE END 2 */
 
@@ -174,10 +148,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV2;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLL1_SOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 4;

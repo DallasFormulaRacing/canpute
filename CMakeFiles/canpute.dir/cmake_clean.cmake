@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "canpute.map"
+  "CMakeFiles/canpute.dir/App/Src/app_init.c.o"
+  "CMakeFiles/canpute.dir/App/Src/app_init.c.o.d"
+  "CMakeFiles/canpute.dir/App/Src/can_utils.c.o"
+  "CMakeFiles/canpute.dir/App/Src/can_utils.c.o.d"
+  "CMakeFiles/canpute.dir/App/Src/command_handler.c.o"
+  "CMakeFiles/canpute.dir/App/Src/command_handler.c.o.d"
+  "CMakeFiles/canpute.dir/App/Src/node_tasks.c.o"
+  "CMakeFiles/canpute.dir/App/Src/node_tasks.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/app_freertos.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/app_freertos.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/fdcan.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/fdcan.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/gpio.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/gpio.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/icache.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/icache.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/main.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/main.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/rng.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/rng.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_hal_msp.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_hal_msp.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_hal_timebase_tim.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_hal_timebase_tim.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_it.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/stm32h5xx_it.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/syscalls.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/syscalls.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/sysmem.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/sysmem.c.o.d"
+  "CMakeFiles/canpute.dir/Core/Src/tim.c.o"
+  "CMakeFiles/canpute.dir/Core/Src/tim.c.o.d"
+  "CMakeFiles/canpute.dir/startup_stm32h533xx.s.o"
+  "canpute"
+  "canpute.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang ASM C)
+  include(CMakeFiles/canpute.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

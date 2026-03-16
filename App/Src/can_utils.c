@@ -1,9 +1,7 @@
 #include "can_utils.h"
+#include "app_globals.h"
 #include "fdcan.h"
 #include "command_handler.h"
-
-extern FDCAN_HandleTypeDef hfdcan2;
-extern NodeHardwareID_t self_node_id;
 
 /**
  * @brief Sets default values for the FDCAN header
@@ -18,21 +16,35 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
     tx_header->MessageMarker = 0;
 }
 
+
 /**
- * @brief Logic-heavy transmission wrapper
+ * @brief CAN transmit wrapper for DFR CAN standardized header format
+ * @param priority 3-bit priority (0-7, 0 is highest)
+ * @param target   5-bit Target Device ID (e.g., NODE_ID_ALL_NODES or a specific node)
+ * @param cmd_type 16-bit Command/Data Type identifier
+ * @param pData    Pointer to the data payload (max 64 bytes for CAN FD)
+ * @param dlc_bytes The FDCAN_DLC_BYTES_XX macro representing the payload size
  */
-HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
+HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
     FDCAN_TxHeaderTypeDef txHeader;
+    
     CAN_InitHeader(&txHeader); 
     
-    txHeader.Identifier = BUILD_CAN_ID(priority, cmd_type, self_node_id);
+    // Identifier built as: [Priority][Target][Command][Source]
+    txHeader.Identifier = BUILD_CAN_ID(priority, target, cmd_type, self_node_id);
     txHeader.DataLength = dlc_bytes;
+
+    // Safety: HAL_FDCAN_AddMessageToTxFifoQ will fail if pData is NULL 
+    // unless the DLC is 0. 
+    if (dlc_bytes == FDCAN_DLC_BYTES_0) {
+        return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, NULL);
+    }
 
     return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, pData);
 }
 
 /**
- * @brief Move the RX Callback here as well to keep it away from generated code
+ * @brief Move the RX Callback here as well to keep it away from generated code and getting overwritten.
  */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
     if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {

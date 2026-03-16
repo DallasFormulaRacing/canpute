@@ -40,7 +40,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+extern osEventFlagsId_t systemEventFlagsHandle;
 
 /* USER CODE END Variables */
 /* Definitions for canfdTXTask */
@@ -62,15 +62,20 @@ osMutexId_t nodeDataMutexHandle;
 const osMutexAttr_t nodeDataMutex_attributes = {
   .name = "nodeDataMutex"
 };
+/* Definitions for standaloneTimer */
+osTimerId_t standaloneTimerHandle;
+const osTimerAttr_t standaloneTimer_attributes = {
+  .name = "standaloneTimer"
+};
 /* Definitions for wheelSpeedFrequency */
 osMessageQueueId_t wheelSpeedFrequencyHandle;
 const osMessageQueueAttr_t wheelSpeedFrequency_attributes = {
   .name = "wheelSpeedFrequency"
 };
-/* Definitions for rpmEvent */
-osEventFlagsId_t rpmEventHandle;
-const osEventFlagsAttr_t rpmEvent_attributes = {
-  .name = "rpmEvent"
+/* Definitions for systemEventFlags */
+osEventFlagsId_t systemEventFlagsHandle;
+const osEventFlagsAttr_t systemEventFlags_attributes = {
+  .name = "systemEventFlags"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,6 +118,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
+  /* creation of standaloneTimer */
+  standaloneTimerHandle = osTimerNew(StandaloneTimer_Callback, osTimerPeriodic, NULL, &standaloneTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -137,8 +144,8 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
-  /* creation of rpmEvent */
-  rpmEventHandle = osEventFlagsNew(&rpmEvent_attributes);
+  /* creation of systemEventFlags */
+  systemEventFlagsHandle = osEventFlagsNew(&systemEventFlags_attributes);
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
@@ -172,6 +179,13 @@ __weak void Start_rpmEvalTask(void *argument)
 
   
   /* USER CODE END rpmEvalTask */
+}
+
+/* StandaloneTimer_Callback function */
+__weak void StandaloneTimer_Callback(void *argument)
+{
+  /* USER CODE BEGIN StandaloneTimer_Callback */
+  /* USER CODE END StandaloneTimer_Callback */
 }
 
 /* Private application code --------------------------------------------------*/

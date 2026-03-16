@@ -134,39 +134,34 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 /* USER CODE BEGIN 1 */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
-		{
-			if (Is_First_Captured==0) // if the first rising edge is not captured
-			{
-				IC_Val1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // read the first value
-				Is_First_Captured = 1;  // set the first captured as true
-			}
+  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+  {
+    if (Is_First_Captured == 0) 
+    {
+      IC_Val1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+      Is_First_Captured = 1;
+    }
+    else 
+    {
+      IC_Val2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
 
-			else   // If the first rising edge is captured, now we will capture the second edge
-			{
-				IC_Val2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);  // read second value
+      if (IC_Val2 > IC_Val1) {
+        Difference = IC_Val2 - IC_Val1;
+      }
+      else {
+        // Note: TIM3 is 16-bit on H5, use 0xFFFF
+        Difference = (0xFFFF - IC_Val1) + IC_Val2;
+      }
 
-				if (IC_Val2 > IC_Val1)
-				{
-					Difference = IC_Val2-IC_Val1;
-				}
+      // Calculate frequency (Ensure TIMCLOCK and PRESCALAR are defined)
+      float refClock = (float)TIMCLOCK / (PRESCALAR);
+      frequency = refClock / (float)Difference;
 
-				else if (IC_Val1 > IC_Val2)
-				{
-					Difference = (0xffffffff - IC_Val1) + IC_Val2;
-				}
+      // Send to the task for processing
+      osMessageQueuePut(wheelSpeedFrequencyHandle, &frequency, 0, 0);
 
-				float refClock = TIMCLOCK/(PRESCALAR);
-
-				frequency = refClock/Difference;
-
-				__HAL_TIM_SET_COUNTER(htim, 0);  // reset the counter
-				Is_First_Captured = 0; // set it back to false
-			}
-			if (osMessageQueuePut(wheelSpeedFrequencyHandle, &frequency, 0, 0) != osOK)
-			{
-			Error_Handler();
-			}
-		}
+      Is_First_Captured = 0; 
+    }
+  }
 }
 /* USER CODE END 1 */

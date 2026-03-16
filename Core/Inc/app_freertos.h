@@ -57,8 +57,9 @@ extern "C" {
 extern osThreadId_t canfdTXTaskHandle;
 extern osThreadId_t rpmEvalTaskHandle;
 extern osMutexId_t nodeDataMutexHandle;
+extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
-extern osEventFlagsId_t rpmEventHandle;
+extern osEventFlagsId_t systemEventFlagsHandle;
 
 /* Exported function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -67,6 +68,7 @@ extern osEventFlagsId_t rpmEventHandle;
 
 void Start_canfdTXTask(void *argument);
 void Start_rpmEvalTask(void *argument);
+void StandaloneTimer_Callback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
