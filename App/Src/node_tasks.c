@@ -1,28 +1,7 @@
 #include "node_tasks.h"
-#include "command_handler.h"
+#include "app_globals.h"
 #include "can_utils.h"
-#include "types.h"
-#include "cmsis_os2.h"
 #include <string.h>
-
-
-
-FDCAN_TxHeaderTypeDef FDCAN2_TxHeader;
-FDCAN_RxHeaderTypeDef FDCAN2_RxHeader;
-uint8_t FDCAN2_txMessageData[16];
-uint8_t FDCAN2_rxMessageData[64];
-NodeDataTypeDef nodeData;
-float wheelSpeedQueueMsg = 0;
-
-extern osEventFlagsId_t systemEventFlagsHandle;
-
-extern osTimerId_t standaloneTimerHandle;
-
-/*
-volatile float rpm_current = 0.0f;         // EMA RPM
-volatile float rpm_instantaneous = 0.0f;
-volatile float rpm_dt = 0.0f;
-*/
 
 
 

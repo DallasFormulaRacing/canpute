@@ -1,4 +1,3 @@
-/* App/Inc/commands.h */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -8,6 +7,14 @@
 #define FLAG_PI_SYNC      0x01  
 #define FLAG_TIMER_TICK   0x02  
 #define FLAG_RPM_PULSE    0x04  
+
+#define CAN_EXT_ID_MASK 0x1FFFFFFF
+
+#define BUILD_CAN_ID(prio, target, cmd, source) \
+    (((uint32_t)(prio) & 0x07) << 26) |         \
+    (((uint32_t)(target) & 0x1F) << 21) |       \
+    (((uint32_t)(cmd) & 0xFFFF) << 5) |         \
+    ((uint32_t)(source) & 0x1F)
 
 typedef struct __attribute__((packed)){
     uint32_t linPotData;
@@ -32,6 +39,23 @@ typedef enum {
     NODE_ID_UNKNOWN     = 0x00
 } NodeHardwareID_t;
 
+typedef enum {
+    CMD_ID_PING             = 0x001,
+    CMD_ID_PONG             = 0x060,
+    CMD_ID_GET_RANDOM       = 0x049, // For testing: Node responds with random data,
+    CMD_ID_REQ_DATA         = 0x050, 
+    CMD_ID_SENDING_DATA     = 0x051, 
+    CMD_ID_RESET_NODE       = 0x099,
+    
+    CMD_ID_SET_LED          = 0x100, // Data[0]: 0=Off, 1=On
+    CMD_ID_SET_FREQ         = 0x101, // Data[0]: New Standalone frequency in Hz
+    CMD_ID_RESET_SIM        = 0x102, // No data: Resets the simulated sensor counters
+    CMD_ID_SET_OFFSET       = 0x103, // Data[0-3]: uint32_t offset for LinPot data
+
+    // Bootloader commands (shared with ezfdbootloader protocol)
+    BL_CMD_PING             = 0x040, // Ping: reply data[0]=0 (bootloader) or 1 (app)
+    BL_CMD_REBOOT           = 0x04D  // Reboot into bootloader
+} CommandID_t;
 
 typedef struct {
     uint32_t uid[3];            // STM32 96-bit UID
@@ -43,10 +67,5 @@ typedef enum {
     MODE_STANDALONE,
     MODE_PI_LINKED
 } CAN_SystemMode_t;
-
-
-
-extern NodeHardwareID_t self_node_id;
-extern NodeDataTypeDef nodeData;
 
 #endif

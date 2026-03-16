@@ -43,12 +43,10 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add sources to executable
+file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "App/Src/*.c")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    App/Src/command_handler.c
-    App/Src/node_tasks.c
-    App/Src/can_utils.c
-    App/Src/app_init.c
+    ${APP_SOURCES}
 )
 
 # Add include paths

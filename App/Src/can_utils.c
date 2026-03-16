@@ -1,9 +1,7 @@
 #include "can_utils.h"
+#include "app_globals.h"
 #include "fdcan.h"
 #include "command_handler.h"
-
-extern FDCAN_HandleTypeDef hfdcan2;
-extern NodeHardwareID_t self_node_id;
 
 /**
  * @brief Sets default values for the FDCAN header
@@ -20,7 +18,7 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
 
 
 /**
- * @brief Logic-heavy transmission wrapper for the new 29-bit ID structure
+ * @brief CAN transmit wrapper for DFR CAN standardized header format
  * @param priority 3-bit priority (0-7, 0 is highest)
  * @param target   5-bit Target Device ID (e.g., NODE_ID_ALL_NODES or a specific node)
  * @param cmd_type 16-bit Command/Data Type identifier
@@ -39,7 +37,6 @@ HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_ty
     // Safety: HAL_FDCAN_AddMessageToTxFifoQ will fail if pData is NULL 
     // unless the DLC is 0. 
     if (dlc_bytes == FDCAN_DLC_BYTES_0) {
-        // Pass a dummy pointer or NULL; HAL ignores pData if DLC is 0
         return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, NULL);
     }
 
@@ -47,7 +44,7 @@ HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_ty
 }
 
 /**
- * @brief Move the RX Callback here as well to keep it away from generated code
+ * @brief Move the RX Callback here as well to keep it away from generated code and getting overwritten.
  */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
     if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {

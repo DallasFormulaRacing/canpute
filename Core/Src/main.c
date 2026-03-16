@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os2.h"
 #include "fdcan.h"
+#include "i2c.h"
 #include "icache.h"
 #include "rng.h"
 #include "tim.h"
@@ -101,6 +102,7 @@ int main(void)
   MX_TIM3_Init();
   MX_ICACHE_Init();
   MX_RNG_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   App_Hardware_Init();

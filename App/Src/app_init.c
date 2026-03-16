@@ -1,21 +1,11 @@
 #include "app_init.h"
-#include "types.h"
+#include "app_config.h"
+#include "app_globals.h"
 #include "fdcan.h"
 #include "tim.h"
 #include <string.h>
-uint32_t current_uid[3];
-// Internal Registry of all physical nodes
-static const UID_Mapping_t Fleet_Table[] = {
-    {{0x12345678, 0xABCDEF01, 0x55667788}, NODE_ID_FRONT_LEFT},
-    {{0x87654321, 0x10FEDCBA, 0x99887766}, NODE_ID_FRONT_RIGHT},
-    {{0x11223344, 0x55667788, 0x99AABBCC}, NODE_ID_REAR_LEFT},
-    {{0x44332211, 0x88776655, 0xCCBBAA99}, NODE_ID_REAR_RIGHT},
-    {{0x001E005F, 0x33335101, 0x32313831}, NODE_ID_NUCLEO_1},
-    {{4522020, 859001089, 842086449}, NODE_ID_NUCLEO_2},
-    {{0xDEADBEEF, 0xCAFEBABE, 0xFEEDFACE}, NODE_ID_DASH}
-};
 
-NodeHardwareID_t self_node_id = NODE_ID_UNKNOWN;
+uint32_t current_uid[3];
 
 void Identify_Self(void) {
     
@@ -39,13 +29,13 @@ void Identify_Self(void) {
 
 
 /**
- * @brief Configures the FDCAN hardware filters for Targeted and Broadcast IDs
+ * @brief Configures the FDCAN hardware filters for relevant IDs based on this nodes identity.
  */
 void Configure_FDCAN_Filters(void) {
     FDCAN_FilterTypeDef filter1;
     filter1.IdType       = FDCAN_EXTENDED_ID;
     filter1.FilterIndex  = 0;
-    filter1.FilterType   = FDCAN_FILTER_MASK; // Use the standard HAL define
+    filter1.FilterType   = FDCAN_FILTER_MASK;
     filter1.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 
     FDCAN_FilterTypeDef filter2;
@@ -76,23 +66,19 @@ void Configure_FDCAN_Filters(void) {
 }
 
 /**
- * @brief User Application Hardware Initialization Entry Point
+ * @brief Hardware initialization entry point. Should be called in main.c after MX_Init functions and before osKernelStart().
  */
 void App_Hardware_Init(void) {
-    /* 1. Establish Identity first */
     Identify_Self(); 
 
-    /* 2. Configure ID filtering */
     Configure_FDCAN_Filters();
 
-    /* 3. Global Filter: Reject everything else to save CPU cycles */
     if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,
         FDCAN_REJECT, FDCAN_REJECT,
         FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE) != HAL_OK) {
         Error_Handler();
     }
 
-    /* 4. Start peripherals and notifications */
     if (HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1) != HAL_OK) {
         Error_Handler();
     }

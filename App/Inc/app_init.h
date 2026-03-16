@@ -6,12 +6,6 @@
 #include "types.h"
 
 /**
- * @brief Global identity of the current node, established during boot.
- * This is defined in app_init.c and used throughout the application.
- */
-extern NodeHardwareID_t self_node_id;
-
-/**
  * @brief Entry point for all non-RTOS hardware logic and identity discovery.
  * This should be called in main.c within the USER CODE BEGIN 2 block, 
  * after peripheral MX_Init functions but before osKernelStart().

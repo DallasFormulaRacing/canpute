@@ -1,16 +1,8 @@
-/* App/Src/command_handler.c */
 #include "command_handler.h"
+#include "app_globals.h"
 #include "can_utils.h"
-#include "cmsis_os2.h"
-#include "types.h"
 #include "main.h"
-
 #include <string.h>
-
-extern osEventFlagsId_t systemEventFlagsHandle;
-extern osTimerId_t standaloneTimerHandle;
-extern osMutexId_t nodeDataMutexHandle;
-extern NodeDataTypeDef nodeData;
 
 void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
     uint8_t  source_id = ext_id & 0x1F;
@@ -25,7 +17,6 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             break;
 
         case CMD_ID_SET_LED:
-            // Assuming LED_GREEN is on a GPIO
             if (data[0] == 1) HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_SET);
             else HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_RESET);
             break;
