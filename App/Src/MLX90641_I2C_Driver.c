@@ -42,7 +42,7 @@ int MLX90641_I2CRead(uint8_t slaveAddr, uint16_t startAddress, uint16_t nMemAddr
 {
     uint16_t sa = (uint16_t)slaveAddr << 1;
     uint16_t bytesToRead = nMemAddressRead * 2;
-    uint8_t i2cData[1664];
+    static uint8_t i2cData[1664];
 
     if (HAL_I2C_Mem_Read(&hi2c1, sa, startAddress, I2C_MEMADD_SIZE_16BIT,
                          i2cData, bytesToRead, MLX90641_I2C_TIMEOUT) != HAL_OK)

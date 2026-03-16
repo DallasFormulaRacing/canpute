@@ -28,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "app_init.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,9 +72,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  __enable_irq();
+  //__enable_irq();
 
-  HAL_RCC_DeInit();
+ // HAL_RCC_DeInit();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

@@ -56,8 +56,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add project symbols (macros)
+if(BOOTLOADER)
+    set(VECT_OFFSET "0x8000U")
+else()
+    set(VECT_OFFSET "0x0U")
+endif()
+
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
+    VECT_TAB_OFFSET=${VECT_OFFSET}
 )
 
 # Remove wrong libob.a library dependency when using cpp files

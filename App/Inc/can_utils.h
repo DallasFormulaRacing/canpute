@@ -8,5 +8,5 @@
 
 // Prototypes
 void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header);
-HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes);
+HAL_StatusTypeDef CAN_Transmit(FDCAN_HandleTypeDef *hfdcan,uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes);
 #endif

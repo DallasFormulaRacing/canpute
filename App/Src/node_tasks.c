@@ -1,43 +1,19 @@
 #include "node_tasks.h"
 #include "app_globals.h"
 #include "can_utils.h"
+#include "MLX90641_API.h"
+#include "MLX90641_I2C_Driver.h"
 #include <string.h>
 
+#define MLX90641_ADDR    0x33
+#define MLX_REFRESH_RATE 0x04  // 8 Hz
+#define EMISSIVITY       0.95f // rubber tire
 
 
 void Start_canfdTXTask(void *argument)
 {
-    uint32_t flags;
-    uint32_t timeout = 5000; // Start with a 5s wait for Pi boot
-    
-    // Initial Mode
-    CAN_SystemMode_t current_mode = MODE_STARTUP;
-
     for(;;) {
-        // Wait for Pi Sync or the 60Hz Standalone Timer
-        flags = osEventFlagsWait(systemEventFlagsHandle, 
-                                 FLAG_PI_SYNC | FLAG_TIMER_TICK, 
-                                 osFlagsWaitAny, timeout);
-
-        //State Transitions
-        if (flags & FLAG_PI_SYNC) {
-            current_mode = MODE_PI_LINKED;
-            timeout = 500; // Falling back to Standalone if Pi is silent for 500ms
-            osTimerStop(standaloneTimerHandle); // Stop standalone pulses while Pi is active
-        } 
-        else if ((flags & FLAG_TIMER_TICK) || (flags == (uint32_t)osErrorTimeout)) {
-            current_mode = MODE_STANDALONE;
-            timeout = osWaitForever; // Controlled by the standaloneTimerHandle callback
-            osTimerStart(standaloneTimerHandle, 16U); // Ensure 60Hz heartbeat
-        }
-
-        //Execution
-        Update_Simulated_Sensors();
-
-        osMutexAcquire(nodeDataMutexHandle, osWaitForever);
-        // Transmit to Pi using our Priority 2, Target Pi ID, and DAQ Command 
-        //CAN_Transmit(2, NODE_ID_RASPI, CMD_ID_SENDING_DATA, (uint8_t*)&nodeData, FDCAN_DLC_BYTES_16);
-        osMutexRelease(nodeDataMutexHandle);
+        osDelay(1000);
     }
 }
 
@@ -59,28 +35,50 @@ void Start_rpmEvalTask(void *argument)
     osMutexRelease(nodeDataMutexHandle);
   }
 }
-void StandaloneTimer_Callback(void *argument)
+
+
+void StartTireTempTask(void *argument)
 {
-  osEventFlagsSet(systemEventFlagsHandle, FLAG_TIMER_TICK);
-}
-void Update_Simulated_Sensors(void) {
-    uint32_t tick = HAL_GetTick();
+    static uint16_t eeData[832];
+    static paramsMLX90641 mlxParams;
+    static uint16_t frameData[242];
+    static float tempGrid[192]; // 16 cols x 12 rows
 
-    if (osMutexAcquire(nodeDataMutexHandle, osWaitForever) == osOK) {
-        // 4-byte fields: Use a counter or sine-wave simulation
-        nodeData.linPotData = (tick / 10) % 4096;      // Simulates 12-bit ADC travel
-        //nodeData.wheelSpeed = (tick / 50) % 200;       // Simulates 0-200 units
+    MLX90641_I2CInit();
+    MLX90641_SetRefreshRate(MLX90641_ADDR, MLX_REFRESH_RATE);
+    MLX90641_DumpEE(MLX90641_ADDR, eeData);
+    MLX90641_ExtractParameters(eeData, &mlxParams);
 
-        // 2-byte and 1-byte fields: Use bitwise shifts of the tick
-        nodeData.fillerData4bytes = tick;
-        nodeData.fillerData2bytes = (uint16_t)(tick & 0xFFFF);
-        
-        // Simulates temperatures in Celsius
-        nodeData.brakeTemperature = (uint8_t)(40 + (tick % 60)); // 40-100C
-        nodeData.tireTemperature = (uint8_t)(30 + (tick % 40));  // 30-70C
+    for (;;)
+    {
+        int status = MLX90641_GetFrameData(MLX90641_ADDR, frameData);
+        if (status < 0) {
+            osDelay(100);
+            continue;
+        }
 
+        float ta = MLX90641_GetTa(frameData, &mlxParams);
+        float tr = ta - 8.0f;
+
+        MLX90641_CalculateTo(frameData, &mlxParams, EMISSIVITY, tr, tempGrid);
+        MLX90641_BadPixelsCorrection(mlxParams.brokenPixel, tempGrid);
+
+        // Average the center 6x6 block (rows 3-8, cols 5-10)
+        float sum = 0.0f;
+        for (int row = 3; row < 9; row++) {
+            for (int col = 5; col < 11; col++) {
+                sum += tempGrid[row * 16 + col];
+            }
+        }
+        float avgTemp = sum / 36.0f;
+
+        osMutexAcquire(nodeDataMutexHandle, osWaitForever);
+        nodeData.tireTemperature = (uint8_t)avgTemp;
         osMutexRelease(nodeDataMutexHandle);
     }
 }
 
-
+void StandaloneTimer_Callback(void *argument)
+{
+  osEventFlagsSet(systemEventFlagsHandle, FLAG_TIMER_TICK);
+}
