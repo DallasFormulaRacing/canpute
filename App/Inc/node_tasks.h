@@ -3,9 +3,10 @@
 
 #include "types.h"
 
-void Start_canfdTXTask(void *argument);
-void Start_rpmEvalTask(void *argument);
-void StartTireTempTask(void *argument);
+void start_canfd_tx(void *argument);
+void start_canfd_rx(void *argument);
+void start_wheel_speed(void *argument);
+void start_tire_temp(void *argument);
 void StandaloneTimer_Callback(void *argument);
 
 #endif

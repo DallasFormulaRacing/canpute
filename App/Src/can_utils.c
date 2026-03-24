@@ -1,7 +1,18 @@
 #include "can_utils.h"
 #include "app_globals.h"
+#include "app_freertos.h"
 #include "fdcan.h"
 #include "command_handler.h"
+
+osMessageQueueId_t canfd_rx_queueHandle;
+static const osMessageQueueAttr_t canfd_rx_queue_attributes = {
+    .name = "canfd_rx_queue"
+};
+
+// Called in app_freertos.c during RTOS init to set up the CAN RX message queue
+void CAN_RxQueue_Init(void) {
+    canfd_rx_queueHandle = osMessageQueueNew(16, sizeof(CAN_RXMsg_t), &canfd_rx_queue_attributes);
+}
 
 /**
  * @brief Sets default values for the FDCAN header
@@ -49,10 +60,11 @@ HAL_StatusTypeDef CAN_Transmit(FDCAN_HandleTypeDef *hfdcan,uint8_t priority, uin
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
     if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
         FDCAN_RxHeaderTypeDef rxHeader;
-        uint8_t rxData[64];
+        CAN_RXMsg_t msg;
 
-        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, rxData) == HAL_OK) {
-            Process_CAN_Command(rxHeader.Identifier, rxData);
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, msg.data) == HAL_OK) {
+            msg.id = rxHeader.Identifier;
+            osMessageQueuePut(canfd_rx_queueHandle, &msg, 0, 0);
         }
     }
 }

@@ -1,6 +1,8 @@
 #include "node_tasks.h"
+#include "app_freertos.h"
 #include "app_globals.h"
 #include "can_utils.h"
+#include "command_handler.h"
 #include "MLX90641_API.h"
 #include "MLX90641_I2C_Driver.h"
 #include <string.h>
@@ -10,15 +12,23 @@
 #define EMISSIVITY       0.95f // rubber tire
 
 
-void Start_canfdTXTask(void *argument)
+void start_canfd_tx(void *argument)
 {
     for(;;) {
         osDelay(1000);
     }
 }
+void start_canfd_rx(void *argument){
+    CAN_RXMsg_t msg;
 
+    for(;;) {
+        if (osMessageQueueGet(canfd_rx_queueHandle, &msg, NULL, osWaitForever) == osOK) {
+            Process_CAN_Command(msg.id, msg.data);
+        }
+    }
+}
 
-void Start_rpmEvalTask(void *argument)
+void start_wheel_speed(void *argument)
 {
   float rxFrequency = 0;
   for (;;)
@@ -37,7 +47,7 @@ void Start_rpmEvalTask(void *argument)
 }
 
 
-void StartTireTempTask(void *argument)
+void start_tire_temp(void *argument)
 {
     static uint16_t eeData[832];
     static paramsMLX90641 mlxParams;

@@ -54,9 +54,10 @@ extern "C" {
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
-extern osThreadId_t canfdTXTaskHandle;
-extern osThreadId_t rpmEvalTaskHandle;
-extern osThreadId_t tireTempTaskHandle;
+extern osThreadId_t canfd_txHandle;
+extern osThreadId_t wheel_speedHandle;
+extern osThreadId_t tire_tempHandle;
+extern osThreadId_t canfd_rxHandle;
 extern osMutexId_t nodeDataMutexHandle;
 extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
@@ -67,9 +68,10 @@ extern osEventFlagsId_t systemEventFlagsHandle;
 
 /* USER CODE END FunctionPrototypes */
 
-void Start_canfdTXTask(void *argument);
-void Start_rpmEvalTask(void *argument);
-void StartTireTempTask(void *argument);
+void start_canfd_tx(void *argument);
+void start_wheel_speed(void *argument);
+void start_tire_temp(void *argument);
+void start_canfd_rx(void *argument);
 void StandaloneTimer_Callback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */

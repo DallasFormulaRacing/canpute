@@ -67,5 +67,9 @@ typedef enum {
     MODE_STANDALONE,
     MODE_PI_LINKED
 } CAN_SystemMode_t;
+typedef struct {                                                                                                                                                                               
+      uint32_t id;
+      uint8_t  data[64];                                                                                                                                                                           
+} CAN_RXMsg_t;
 
 #endif
