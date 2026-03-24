@@ -49,7 +49,7 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             break;  
         case CMD_ID_PING:
             // No payload needed for ping command
-            CAN_Transmit(1, NODE_ID_RASPI, CMD_ID_PONG, NULL, FDCAN_DLC_BYTES_0);
+            CAN_Transmit(&hfdcan2,1, NODE_ID_RASPI, CMD_ID_PONG, NULL, FDCAN_DLC_BYTES_0);
             break;
         case CMD_ID_GET_RANDOM: {
             uint32_t random_val;
@@ -62,13 +62,13 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             resp_data[3] = (uint8_t)((random_val >> 24) & 0xFF);
 
             // Transmit back to Pi (Source 0x1E)
-            CAN_Transmit(1, NODE_ID_RASPI, CMD_ID_GET_RANDOM, resp_data, FDCAN_DLC_BYTES_4);
+            CAN_Transmit(&hfdcan2,1, NODE_ID_RASPI, CMD_ID_GET_RANDOM, resp_data, FDCAN_DLC_BYTES_4);
             break;
         }
         case BL_CMD_PING: {
             // Reply with data[0]=1 meaning "in application"
             uint8_t ping_resp = 1;
-            CAN_Transmit(1, source_id, BL_CMD_PING, &ping_resp, FDCAN_DLC_BYTES_1);
+            CAN_Transmit(&hfdcan2,1, source_id, BL_CMD_PING, &ping_resp, FDCAN_DLC_BYTES_1);
             break;
         }
         case BL_CMD_REBOOT:

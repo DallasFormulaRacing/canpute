@@ -57,6 +57,13 @@ const osThreadAttr_t rpmEvalTask_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
+/* Definitions for tireTempTask */
+osThreadId_t tireTempTaskHandle;
+const osThreadAttr_t tireTempTask_attributes = {
+  .name = "tireTempTask",
+  .priority = (osPriority_t) osPriorityBelowNormal1,
+  .stack_size = 1024 * 4
+};
 /* Definitions for nodeDataMutex */
 osMutexId_t nodeDataMutexHandle;
 const osMutexAttr_t nodeDataMutex_attributes = {
@@ -136,8 +143,11 @@ void MX_FREERTOS_Init(void) {
   /* creation of rpmEvalTask */
   rpmEvalTaskHandle = osThreadNew(Start_rpmEvalTask, NULL, &rpmEvalTask_attributes);
 
+  /* creation of tireTempTask */
+  tireTempTaskHandle = osThreadNew(StartTireTempTask, NULL, &tireTempTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
-  if((canfdTXTaskHandle == NULL)||(rpmEvalTaskHandle == NULL))
+  if((canfdTXTaskHandle == NULL)||(rpmEvalTaskHandle == NULL) || (tireTempTaskHandle == NULL))
   {
     Error_Handler();
   }
@@ -179,6 +189,19 @@ __weak void Start_rpmEvalTask(void *argument)
 
   
   /* USER CODE END rpmEvalTask */
+}
+
+/* USER CODE BEGIN Header_StartTireTempTask */
+/**
+* @brief Function implementing the tireTempTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTireTempTask */
+__weak void StartTireTempTask(void *argument)
+{
+  /* USER CODE BEGIN tireTempTask */
+  /* USER CODE END tireTempTask */
 }
 
 /* StandaloneTimer_Callback function */

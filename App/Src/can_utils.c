@@ -25,7 +25,7 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
  * @param pData    Pointer to the data payload (max 64 bytes for CAN FD)
  * @param dlc_bytes The FDCAN_DLC_BYTES_XX macro representing the payload size
  */
-HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
+HAL_StatusTypeDef CAN_Transmit(FDCAN_HandleTypeDef *hfdcan,uint8_t priority, uint8_t target, uint32_t cmd_type, uint8_t* pData, uint32_t dlc_bytes) {
     FDCAN_TxHeaderTypeDef txHeader;
     
     CAN_InitHeader(&txHeader); 
@@ -37,10 +37,10 @@ HAL_StatusTypeDef CAN_Transmit(uint8_t priority, uint8_t target, uint32_t cmd_ty
     // Safety: HAL_FDCAN_AddMessageToTxFifoQ will fail if pData is NULL 
     // unless the DLC is 0. 
     if (dlc_bytes == FDCAN_DLC_BYTES_0) {
-        return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, NULL);
+        return HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &txHeader, NULL);
     }
 
-    return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &txHeader, pData);
+    return HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &txHeader, pData);
 }
 
 /**

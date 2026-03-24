@@ -5,6 +5,7 @@
 
 void Start_canfdTXTask(void *argument);
 void Start_rpmEvalTask(void *argument);
-void Update_Simulated_Sensors(void);
+void StartTireTempTask(void *argument);
+void StandaloneTimer_Callback(void *argument);
 
 #endif
