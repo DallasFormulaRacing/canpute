@@ -1,0 +1,21 @@
+[
+  {
+    "label": "Debug canpute",
+    "adapter": "probe-rs",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "server": "127.0.0.1:50000",
+    "chip": "STM32H533RETx",
+    "coreConfigs": [
+      {
+        "coreIndex": 0,
+        "programBinary": "$ZED_WORKTREE_ROOT/build/Debug/canpute.elf",
+        "svdFile": "",
+      },
+    ],
+    "flashingConfig": {
+      "flashingEnabled": true,
+    },
+    "wireProtocol": "Swd",
+  },
+]

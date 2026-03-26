@@ -1,12 +1,11 @@
-# Build for ST-Link/SWD debugging (standalone, no bootloader)
-debug:
-    cmake --preset Debug
-    cmake --build --preset Debug
+# Build firmware: just build debug | just build release
+build config:
+    cmake --preset {{capitalize(config)}}
+    cmake --build --preset {{capitalize(config)}}
 
-# Build for bootloader deployment
-release:
-    cmake --preset Release
-    cmake --build --preset Release
+# Start probe-rs DAP server, then run "debugger: start" in Zed
+debug:
+    probe-rs dap-server --port 50000
 
 # Clean all build artifacts
 clean:
