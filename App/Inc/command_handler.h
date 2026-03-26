@@ -4,7 +4,10 @@
 
 #include "stm32h5xx_hal.h"
 #include "types.h"
-
+#include "app_globals.h"
+#include "can_utils.h"
+#include "main.h"
+#include <string.h>
 
 
 

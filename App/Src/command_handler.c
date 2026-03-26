@@ -1,8 +1,5 @@
 #include "command_handler.h"
-#include "app_globals.h"
-#include "can_utils.h"
-#include "main.h"
-#include <string.h>
+
 
 void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
     uint8_t  source_id = ext_id & 0x1F;
@@ -12,7 +9,7 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
     (void)target_id;
 
     switch(command) {
-        case CMD_ID_REQ_DATA: 
+        case CMD_ID_REQ_DATA:
             osEventFlagsSet(systemEventFlagsHandle, FLAG_PI_SYNC);
             break;
 
@@ -38,7 +35,7 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
         case CMD_ID_SET_OFFSET:
             osMutexAcquire(nodeDataMutexHandle, osWaitForever);
             // Reconstruct uint32 from bytes (Little Endian)
-            uint32_t offset = (uint32_t)data[0] | ((uint32_t)data[1] << 8) | 
+            uint32_t offset = (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
                               ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
             nodeData.fillerData4bytes = offset; // Use a filler field for testing
             osMutexRelease(nodeDataMutexHandle);
@@ -46,7 +43,7 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
 
         case CMD_ID_RESET_NODE:
             HAL_NVIC_SystemReset();
-            break;  
+            break;
         case CMD_ID_PING:
             // No payload needed for ping command
             CAN_Transmit(&hfdcan2,1, NODE_ID_RASPI, CMD_ID_PONG, NULL, FDCAN_DLC_BYTES_0);
