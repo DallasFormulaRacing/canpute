@@ -1,51 +1,11 @@
-#include "node_tasks.h"
 #include "app_freertos.h"
 #include "app_globals.h"
-#include "can_utils.h"
-#include "command_handler.h"
 #include "MLX90641_API.h"
 #include "MLX90641_I2C_Driver.h"
-#include <string.h>
 
 #define MLX90641_ADDR    0x33
 #define MLX_REFRESH_RATE 0x04  // 8 Hz
 #define EMISSIVITY       0.95f // rubber tire
-
-
-void start_canfd_tx(void *argument)
-{
-    for(;;) {
-        osDelay(1000);
-    }
-}
-void start_canfd_rx(void *argument){
-    CAN_RXMsg_t msg;
-
-    for(;;) {
-        if (osMessageQueueGet(canfd_rx_queueHandle, &msg, NULL, osWaitForever) == osOK) {
-            Process_CAN_Command(msg.id, msg.data);
-        }
-    }
-}
-
-void start_wheel_speed(void *argument)
-{
-  float rxFrequency = 0;
-  for (;;)
-  {
-    // Wait for 500ms. Car is stopped if no pulses received.
-    osStatus_t status = osMessageQueueGet(wheelSpeedFrequencyHandle, &rxFrequency, NULL, 500);
-
-    osMutexAcquire(nodeDataMutexHandle, osWaitForever);
-    if (status == osOK) {
-        nodeData.wheelSpeed = (uint32_t)rxFrequency; // Convert freq to RPM/Speed as needed
-    } else {
-        nodeData.wheelSpeed = 0; // Timeout reached, car is stopped
-    }
-    osMutexRelease(nodeDataMutexHandle);
-  }
-}
-
 
 void start_tire_temp(void *argument)
 {
@@ -86,9 +46,4 @@ void start_tire_temp(void *argument)
         nodeData.tireTemperature = (uint8_t)avgTemp;
         osMutexRelease(nodeDataMutexHandle);
     }
-}
-
-void StandaloneTimer_Callback(void *argument)
-{
-  osEventFlagsSet(systemEventFlagsHandle, FLAG_TIMER_TICK);
 }

@@ -63,7 +63,7 @@ extern unsigned long getRunTimeCounterValue(void);
 /*-------------------- STM32H5 specific defines -------------------*/
 #define configENABLE_TRUSTZONE                   0
 #define configRUN_FREERTOS_SECURE_ONLY           0
-#define configENABLE_FPU                         0
+#define configENABLE_FPU                         1
 #define configENABLE_MPU                         0
 #define configUSE_PREEMPTION                     1
 #define configSUPPORT_STATIC_ALLOCATION          1
@@ -74,7 +74,7 @@ extern unsigned long getRunTimeCounterValue(void);
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 56 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                    ((size_t)8192)
+#define configTOTAL_HEAP_SIZE                    ((size_t)32768)
 #define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP 0
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configGENERATE_RUN_TIME_STATS            1
@@ -91,6 +91,13 @@ extern unsigned long getRunTimeCounterValue(void);
 #define configHEAP_CLEAR_MEMORY_ON_FREE          0
 #define configUSE_MINI_LIST_ITEM                 1
 #define configUSE_SB_COMPLETED_CALLBACK          0
+#define configKERNEL_PROVIDED_STATIC_MEMORY      1
+#define configSTATS_BUFFER_MAX_LENGTH            0xFFFF
+#define configENABLE_HEAP_PROTECTOR              0
+#define configUSE_EVENT_GROUPS                   1
+#define configUSE_STREAM_BUFFERS                 1
+#define configCHECK_HANDLER_INSTALLATION         1
+#define configVALIDATE_HEAP_BLOCK_POINTER        0
 /* USER CODE BEGIN MESSAGE_BUFFER_LENGTH_TYPE */
 /* Defaults to size_t for backward compatibility, but can be changed
    if lengths will always be less than the number of bytes in a size_t. */
@@ -98,6 +105,8 @@ extern unsigned long getRunTimeCounterValue(void);
 /* USER CODE END MESSAGE_BUFFER_LENGTH_TYPE */
 
 #define configRUN_TIME_COUNTER_TYPE              size_t
+
+#define configSTACK_DEPTH_TYPE                   size_t
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES                    0
@@ -133,6 +142,7 @@ to exclude the API function. */
 #define INCLUDE_uxTaskGetStackHighWaterMark  1
 #define INCLUDE_xTaskGetCurrentTaskHandle    1
 #define INCLUDE_eTaskGetState                1
+#define INCLUDE_xTaskAbortDelay              1
 
 /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS

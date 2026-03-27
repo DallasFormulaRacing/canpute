@@ -11,6 +11,7 @@
  * after peripheral MX_Init functions but before osKernelStart().
  */
 void App_Hardware_Init(void);
+void App_RTOS_Init(void);
 
 /**
  * @brief Configures FDCAN hardware filters based on the discovered identity.
