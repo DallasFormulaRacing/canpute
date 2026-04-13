@@ -21,6 +21,8 @@ set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/Third_Party/CMSIS/RTOS2/Include/
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionGC_Library/Inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionGT_Library/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionFX_Library/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionAC_Library/Inc
 )
 
 # STM32CubeMX generated application sources
@@ -93,11 +95,15 @@ set(MX_LINK_DIRS
 
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionGC_Library/Lib
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionGT_Library/Lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionFX_Library/Lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/STM32_MotionAC_Library/Lib
 )
 # Project static libraries
 set(MX_LINK_LIBS  
 	:MotionGC_CM33F_wc32_ot_hard.a 
-	:MotionGT_CM33F_wc32_ot_hard.a
+	:MotionGT_CM33F_wc32_ot_hard.a 
+	:MotionFX_CM33F_wc32_ot_hard.a 
+	:MotionAC_CM33F_wc32_ot_hard.a
     STM32_Drivers
     ${TOOLCHAIN_LINK_LIBRARIES}
     RTOS2	
