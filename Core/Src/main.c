@@ -101,7 +101,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_GPDMA1_Init();
-  MX_GPDMA2_Init();
   MX_FDCAN2_Init();
   MX_TIM3_Init();
   MX_ICACHE_Init();
@@ -110,8 +109,6 @@ int main(void)
   MX_CRC_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-
-  App_Hardware_Init();
 
   /* USER CODE END 2 */
 

@@ -5,7 +5,8 @@
 
 #define MLX90641_ADDR    0x33
 #define MLX_REFRESH_RATE 0x04  // 8 Hz
-#define EMISSIVITY       0.95f // rubber tire
+#define EMISSIVITY       0.98f // human skin
+//#define EMISSIVITY       0.95f // rubber tire
 
 void start_tire_temp(void *argument)
 {

@@ -37,7 +37,6 @@ extern "C" {
 /* USER CODE END Private defines */
 
 void MX_GPDMA1_Init(void);
-void MX_GPDMA2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

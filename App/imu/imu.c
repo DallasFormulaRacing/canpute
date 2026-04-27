@@ -34,6 +34,7 @@ void IMU_Init(void)
     dev_ctx.write_reg = platform_write;
     dev_ctx.read_reg  = platform_read;
     dev_ctx.mdelay    = platform_delay;
+    // IMU USES i2c2
     dev_ctx.handle    = &hi2c2;
 
     // Reset before use to ensure imu is in a known state and clear old data
@@ -45,13 +46,13 @@ void IMU_Init(void)
     // Verify WHO_AM_I
     asm330lhhx_device_id_get(&dev_ctx, &whoamI);
     if (whoamI != ASM330LHHX_ID) {
-        return; 
+        return;
     }
 
-    // Block data update - output regs not updated until read 
+    // Block data update - output regs not updated until read
     asm330lhhx_block_data_update_set(&dev_ctx, PROPERTY_ENABLE);
 
-    // Accelerometer: 417 Hz, +/-4g 
+    // Accelerometer: 417 Hz, +/-4g
     asm330lhhx_xl_data_rate_set(&dev_ctx, ASM330LHHX_XL_ODR_417Hz);
     asm330lhhx_xl_full_scale_set(&dev_ctx, ASM330LHHX_4g);
 
@@ -59,7 +60,7 @@ void IMU_Init(void)
     asm330lhhx_gy_data_rate_set(&dev_ctx, ASM330LHHX_GY_ODR_417Hz);
     asm330lhhx_gy_full_scale_set(&dev_ctx, ASM330LHHX_2000dps);
 
-    // FIFO: batch both XL and GY at 417 Hz 
+    // FIFO: batch both XL and GY at 417 Hz
     asm330lhhx_fifo_xl_batch_set(&dev_ctx, ASM330LHHX_XL_BATCHED_AT_417Hz);
     asm330lhhx_fifo_gy_batch_set(&dev_ctx, ASM330LHHX_GY_BATCHED_AT_417Hz);
 

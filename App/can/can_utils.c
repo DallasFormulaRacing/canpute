@@ -64,7 +64,9 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, msg.data) == HAL_OK) {
             msg.id = rxHeader.Identifier;
-            osMessageQueuePut(canfd_rx_queueHandle, &msg, 0, 0);
+            if (canfd_rx_queueHandle != NULL) {
+                (void)osMessageQueuePut(canfd_rx_queueHandle, &msg, 0, 0);
+            }
         }
     }
 }
