@@ -17,5 +17,6 @@ extern osEventFlagsId_t systemEventFlagsHandle;
 extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
 extern osMessageQueueId_t canfd_rx_queueHandle;
+extern osThreadId_t imuHandle;
 
 #endif

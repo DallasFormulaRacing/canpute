@@ -107,7 +107,6 @@ __weak unsigned long getRunTimeCounterValue(void)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-  App_Hardware_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */

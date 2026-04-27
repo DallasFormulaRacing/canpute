@@ -27,8 +27,18 @@ void start_imu(void *argument)
     for (;;)
     {
         uint16_t len = 0;
+        uint32_t flags = osThreadFlagsWait(IMU_THREAD_FLAG_DMA_READY | IMU_THREAD_FLAG_DMA_ERROR,
+                                           osFlagsWaitAny,
+                                           osWaitForever);
 
-        IMU_FIFO_Read(imu_frame, &len);
+        if ((flags & IMU_THREAD_FLAG_DMA_ERROR) != 0U) {
+            continue;
+        }
+
+        if ((flags & IMU_THREAD_FLAG_DMA_READY) != 0U) {
+            IMU_FIFO_Read(imu_frame, &len);
+        }
+
         if (len == IMU_FIFO_FRAME_SIZE) {
             /* Convert first gyro sample (bytes 0-5) to degrees/sec */
             int16_t gx = (int16_t)(imu_frame[1] << 8 | imu_frame[0]);
@@ -58,7 +68,5 @@ void start_imu(void *argument)
             imu_gyro_dps[1] -= gyro_bias.GyroBiasY;
             imu_gyro_dps[2] -= gyro_bias.GyroBiasZ;
         }
-
-        osDelay(12); /* 5 samples at 417 Hz = ~12 ms per batch */
     }
 }

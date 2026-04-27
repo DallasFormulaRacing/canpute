@@ -117,6 +117,10 @@ int main(void)
   /* Call init function for freertos objects (in app_freertos.c) */
   MX_FREERTOS_Init();
 
+  /* USER CODE BEGIN RTOS_READY */
+  App_Hardware_Init();
+  /* USER CODE END RTOS_READY */
+
   /* Start scheduler */
   osKernelStart();
 
