@@ -1,5 +1,6 @@
 #include "command_handler.h"
 #include "imu.h"
+#include <string.h>
 
 
 void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
@@ -19,7 +20,16 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             break;
         }
         case CMD_REQ_TEMP_DATA:
-        case CMD_REQ_SPEED_DATA:
+        {
+            uint8_t tx_buf[64] = {0};
+
+            osMutexAcquire(temperatureSpeedDataMutexHandle, osWaitForever);
+            memcpy(tx_buf, &temperatureSpeedData, sizeof(temperatureSpeedData));
+            osMutexRelease(temperatureSpeedDataMutexHandle);
+
+            CAN_Transmit(&hfdcan2, 1, source_id, CMD_TEMP_DATA, tx_buf, FDCAN_DLC_BYTES_64);
+            break;
+        }
         case CMD_REQ_RIDE_HEIGHT_DATA:
             osEventFlagsSet(systemEventFlagsHandle, FLAG_PI_SYNC);
             break;

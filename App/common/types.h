@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 
@@ -16,14 +17,12 @@
     (((uint32_t)(cmd) & 0xFFFF) << 5) |         \
     ((uint32_t)(source) & 0x1F)
 
-typedef struct __attribute__((packed)){
-    uint32_t linPotData;
-    uint32_t wheelSpeed;
-    uint32_t fillerData4bytes;
-    uint16_t fillerData2bytes;
-    uint8_t brakeTemperature;
-    uint8_t tireTemperature;
-} NodeDataTypeDef;
+typedef struct __attribute__((packed)) {
+    int16_t tireTemperature_dC[15];
+    int16_t brakeTemperature_dC[15];
+    uint32_t wheelSpeed_mHz;
+} TemperatureSpeedData_t;
+
 typedef enum {
     NODE_ID_ALL_NODES   = 0x01, // 00001 (Broadcast)
     NODE_ID_FRONT_LEFT  = 0x02, // 00010

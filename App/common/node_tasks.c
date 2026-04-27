@@ -17,7 +17,7 @@ osThreadId_t tire_tempHandle;
 osThreadId_t imuHandle;
 
 /* Sync objects */
-osMutexId_t nodeDataMutexHandle;
+osMutexId_t temperatureSpeedDataMutexHandle;
 osTimerId_t standaloneTimerHandle;
 osMessageQueueId_t wheelSpeedFrequencyHandle;
 osEventFlagsId_t systemEventFlagsHandle;
@@ -30,8 +30,8 @@ osEventFlagsId_t systemEventFlagsHandle;
 
 void App_RTOS_Init(void)
 {
-    nodeDataMutexHandle = osMutexNew(NULL);
-    if (nodeDataMutexHandle == NULL) Error_Handler();
+    temperatureSpeedDataMutexHandle = osMutexNew(NULL);
+    if (temperatureSpeedDataMutexHandle == NULL) Error_Handler();
 
     standaloneTimerHandle = osTimerNew(StandaloneTimer_Callback, osTimerPeriodic, NULL, NULL);
     if (standaloneTimerHandle == NULL) Error_Handler();
