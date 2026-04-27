@@ -7,7 +7,6 @@
 #include "app_globals.h"
 #include "can_utils.h"
 #include "main.h"
-#include <string.h>
 
 
 
