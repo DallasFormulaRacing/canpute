@@ -19,7 +19,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os2.h"
+#include "crc.h"
 #include "fdcan.h"
+#include "gpdma.h"
 #include "i2c.h"
 #include "icache.h"
 #include "rng.h"
@@ -98,14 +100,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_GPDMA1_Init();
   MX_FDCAN2_Init();
   MX_TIM3_Init();
   MX_ICACHE_Init();
   MX_RNG_Init();
   MX_I2C1_Init();
+  MX_CRC_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-
-  App_Hardware_Init();
 
   /* USER CODE END 2 */
 
@@ -113,6 +116,10 @@ int main(void)
   osKernelInitialize();
   /* Call init function for freertos objects (in app_freertos.c) */
   MX_FREERTOS_Init();
+
+  /* USER CODE BEGIN RTOS_READY */
+  App_Hardware_Init();
+  /* USER CODE END RTOS_READY */
 
   /* Start scheduler */
   osKernelStart();

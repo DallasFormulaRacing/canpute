@@ -6,15 +6,17 @@
 #include "types.h"
 
 extern NodeHardwareID_t self_node_id;
-extern NodeDataTypeDef nodeData;
+extern TemperatureSpeedData_t temperatureSpeedData;
 
 extern FDCAN_HandleTypeDef hfdcan2;
 extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c2;
 
-extern osMutexId_t nodeDataMutexHandle;
+extern osMutexId_t temperatureSpeedDataMutexHandle;
 extern osEventFlagsId_t systemEventFlagsHandle;
 extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
 extern osMessageQueueId_t canfd_rx_queueHandle;
+extern osThreadId_t imuHandle;
 
 #endif

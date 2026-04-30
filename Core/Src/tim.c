@@ -21,6 +21,8 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
+#include "app_globals.h"
+
 uint32_t IC_Val1 = 0;
 uint32_t IC_Val2 = 0;
 uint32_t Difference = 0;

@@ -54,29 +54,20 @@ extern "C" {
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
-extern osThreadId_t canfd_txHandle;
-extern osThreadId_t wheel_speedHandle;
-extern osThreadId_t tire_tempHandle;
-extern osThreadId_t canfd_rxHandle;
-extern osMutexId_t nodeDataMutexHandle;
-extern osTimerId_t standaloneTimerHandle;
-extern osMessageQueueId_t wheelSpeedFrequencyHandle;
-extern osEventFlagsId_t systemEventFlagsHandle;
+extern osThreadId_t defaultTaskHandle;
 
 /* Exported function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
 
-void start_canfd_tx(void *argument);
-void start_wheel_speed(void *argument);
-void start_tire_temp(void *argument);
-void start_canfd_rx(void *argument);
-void StandaloneTimer_Callback(void *argument);
+void StartDefaultTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* Hook prototypes */
+void vApplicationMallocFailedHook(void);
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName);
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
 /* Private application code --------------------------------------------------*/

@@ -22,10 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
-#include "types.h"
-#include "can_utils.h"
-#include "app_globals.h"
+#include "app_init.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,66 +35,57 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-extern osEventFlagsId_t systemEventFlagsHandle;
-
 /* USER CODE END Variables */
-/* Definitions for canfd_tx */
-osThreadId_t canfd_txHandle;
-const osThreadAttr_t canfd_tx_attributes = {
-  .name = "canfd_tx",
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
-};
-/* Definitions for wheel_speed */
-osThreadId_t wheel_speedHandle;
-const osThreadAttr_t wheel_speed_attributes = {
-  .name = "wheel_speed",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
-};
-/* Definitions for tire_temp */
-osThreadId_t tire_tempHandle;
-const osThreadAttr_t tire_temp_attributes = {
-  .name = "tire_temp",
-  .priority = (osPriority_t) osPriorityBelowNormal1,
-  .stack_size = 1024 * 4
-};
-/* Definitions for canfd_rx */
-osThreadId_t canfd_rxHandle;
-const osThreadAttr_t canfd_rx_attributes = {
-  .name = "canfd_rx",
-  .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 128 * 4
-};
-/* Definitions for nodeDataMutex */
-osMutexId_t nodeDataMutexHandle;
-const osMutexAttr_t nodeDataMutex_attributes = {
-  .name = "nodeDataMutex"
-};
-/* Definitions for standaloneTimer */
-osTimerId_t standaloneTimerHandle;
-const osTimerAttr_t standaloneTimer_attributes = {
-  .name = "standaloneTimer"
-};
-/* Definitions for wheelSpeedFrequency */
-osMessageQueueId_t wheelSpeedFrequencyHandle;
-const osMessageQueueAttr_t wheelSpeedFrequency_attributes = {
-  .name = "wheelSpeedFrequency"
-};
-/* Definitions for systemEventFlags */
-osEventFlagsId_t systemEventFlagsHandle;
-const osEventFlagsAttr_t systemEventFlags_attributes = {
-  .name = "systemEventFlags"
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 /* USER CODE END FunctionPrototypes */
+
+/* USER CODE BEGIN 5 */
+void vApplicationMallocFailedHook(void)
+{
+   /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h. It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created. It is also called by various parts of the
+   demo application. If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+  taskDISABLE_INTERRUPTS();
+  for (;;)
+  {
+  }
+}
+/* USER CODE END 5 */
+
+/* USER CODE BEGIN 4 */
+void vApplicationStackOverflowHook(xTaskHandle xTask, char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+  (void)xTask;
+  (void)pcTaskName;
+  taskDISABLE_INTERRUPTS();
+  for (;;)
+  {
+  }
+}
+/* USER CODE END 4 */
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
@@ -119,139 +107,51 @@ __weak unsigned long getRunTimeCounterValue(void)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
-  /* creation of nodeDataMutex */
-  nodeDataMutexHandle = osMutexNew(&nodeDataMutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  if(nodeDataMutexHandle == NULL)
-  {
-    Error_Handler();
-  }
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
-  /* creation of standaloneTimer */
-  standaloneTimerHandle = osTimerNew(StandaloneTimer_Callback, osTimerPeriodic, NULL, &standaloneTimer_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-  /* creation of wheelSpeedFrequency */
-  wheelSpeedFrequencyHandle = osMessageQueueNew (16, sizeof(float), &wheelSpeedFrequency_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  CAN_RxQueue_Init();
+  /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
-  /* creation of canfd_tx */
-  canfd_txHandle = osThreadNew(start_canfd_tx, NULL, &canfd_tx_attributes);
-
-  /* creation of wheel_speed */
-  wheel_speedHandle = osThreadNew(start_wheel_speed, NULL, &wheel_speed_attributes);
-
-  /* creation of tire_temp */
-  tire_tempHandle = osThreadNew(start_tire_temp, NULL, &tire_temp_attributes);
-
-  /* creation of canfd_rx */
-  canfd_rxHandle = osThreadNew(start_canfd_rx, NULL, &canfd_rx_attributes);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  if((canfd_txHandle == NULL)||(wheel_speedHandle == NULL) || (tire_tempHandle == NULL) || (canfd_rxHandle == NULL))
-  {
-    Error_Handler();
-  }
-  /* add threads, ... */
+  App_RTOS_Init();
   /* USER CODE END RTOS_THREADS */
-
-  /* creation of systemEventFlags */
-  systemEventFlagsHandle = osEventFlagsNew(&systemEventFlags_attributes);
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
 }
-/* USER CODE BEGIN Header_start_canfd_tx */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
-* @brief Function implementing the canfd_tx thread.
+* @brief Function implementing the defaultTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_start_canfd_tx */
-__weak void start_canfd_tx(void *argument)
+/* USER CODE END Header_StartDefaultTask */
+__weak void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN canfd_tx */
+  /* USER CODE BEGIN defaultTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END canfd_tx */
-}
-
-/* USER CODE BEGIN Header_start_wheel_speed */
-/**
-* @brief Function implementing the wheel_speed thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_start_wheel_speed */
-__weak void start_wheel_speed(void *argument)
-{
-  /* USER CODE BEGIN wheel_speed */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END wheel_speed */
-}
-
-/* USER CODE BEGIN Header_start_tire_temp */
-/**
-* @brief Function implementing the tire_temp thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_start_tire_temp */
-__weak void start_tire_temp(void *argument)
-{
-  /* USER CODE BEGIN tire_temp */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END tire_temp */
-}
-
-/* USER CODE BEGIN Header_start_canfd_rx */
-/**
-* @brief Function implementing the canfd_rx thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_start_canfd_rx */
-__weak void start_canfd_rx(void *argument)
-{
-  /* USER CODE BEGIN canfd_rx */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END canfd_rx */
-}
-
-/* StandaloneTimer_Callback function */
-__weak void StandaloneTimer_Callback(void *argument)
-{
-  /* USER CODE BEGIN StandaloneTimer_Callback */
-  /* USER CODE END StandaloneTimer_Callback */
+  /* USER CODE END defaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
