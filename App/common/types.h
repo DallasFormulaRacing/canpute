@@ -10,6 +10,7 @@
 #define FLAG_RPM_PULSE    0x04
 
 #define CAN_EXT_ID_MASK 0x1FFFFFFF
+#define TEMPERATURE_SAMPLE_COUNT 16
 
 #define BUILD_CAN_ID(prio, target, cmd, source) \
     (((uint32_t)(prio) & 0x07) << 26) |         \
@@ -18,9 +19,8 @@
     ((uint32_t)(source) & 0x1F)
 
 typedef struct __attribute__((packed)) {
-    int16_t tireTemperature_dC[15];
-    int16_t brakeTemperature_dC[15];
-    uint32_t wheelSpeed_mHz;
+    int16_t tireTemperature_dC[TEMPERATURE_SAMPLE_COUNT];
+    int16_t brakeTemperature_dC[TEMPERATURE_SAMPLE_COUNT];
 } TemperatureSpeedData_t;
 
 typedef enum {

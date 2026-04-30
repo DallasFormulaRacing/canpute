@@ -53,33 +53,16 @@ void start_tire_temp(void *argument)
         MLX90641_CalculateTo(frameData, &mlxParams, EMISSIVITY, tr, tempGrid);
         MLX90641_BadPixelsCorrection(mlxParams.brokenPixel, tempGrid);
 
-        int16_t tireZones[15];
+        int16_t tireZones[TEMPERATURE_SAMPLE_COUNT];
         uint8_t zoneIdx = 0;
 
-        for (uint8_t rowBand = 0; rowBand < 3; rowBand++) {
-            uint8_t rowStart = rowBand * 4;
-            uint8_t rowEnd = rowStart + 4;
+        for (uint8_t rowBand = 0; rowBand < 4; rowBand++) {
+            uint8_t rowStart = rowBand * 3;
+            uint8_t rowEnd = rowStart + 3;
 
-            for (uint8_t colBand = 0; colBand < 5; colBand++) {
-                uint8_t colStart;
-                uint8_t colEnd;
-
-                if (colBand == 0) {
-                    colStart = 0;
-                    colEnd = 3;
-                } else if (colBand == 1) {
-                    colStart = 3;
-                    colEnd = 6;
-                } else if (colBand == 2) {
-                    colStart = 6;
-                    colEnd = 10;
-                } else if (colBand == 3) {
-                    colStart = 10;
-                    colEnd = 13;
-                } else {
-                    colStart = 13;
-                    colEnd = 16;
-                }
+            for (uint8_t colBand = 0; colBand < 4; colBand++) {
+                uint8_t colStart = colBand * 4;
+                uint8_t colEnd = colStart + 4;
 
                 float sum = 0.0f;
                 uint8_t sampleCount = 0;
@@ -97,8 +80,9 @@ void start_tire_temp(void *argument)
         }
 
         osMutexAcquire(temperatureSpeedDataMutexHandle, osWaitForever);
-        for (uint8_t i = 0; i < 15; i++) {
+        for (uint8_t i = 0; i < TEMPERATURE_SAMPLE_COUNT; i++) {
             temperatureSpeedData.tireTemperature_dC[i] = tireZones[i];
+            temperatureSpeedData.brakeTemperature_dC[i] = 0;
         }
         osMutexRelease(temperatureSpeedDataMutexHandle);
     }

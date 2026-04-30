@@ -45,7 +45,7 @@
 | `CMD_REQ_SPEED_DATA`       | `0xD103` | `1101000100000011`   | Request Wheel Speed data                  | `0`     | No data                              |
 | `CMD_REQ_RIDE_HEIGHT_DATA` | `0xD104` | `1101000100000100`   | Request Ride Height data                  | `0`     | No data                              |
 | `CMD_IMU_DATA`             | `0xD201` | `1101001000000001`   | Response carrying IMU data                | `TBD`   | TBD: IMU sample payload              |
-| `CMD_TEMP_DATA`            | `0xD202` | `1101001000000010`   | Response carrying Temperature data        | `TBD`   | TBD: temperature sample payload      |
+| `CMD_TEMP_DATA`            | `0xD202` | `1101001000000010`   | Response carrying Temperature data        | `64`    | Bytes `0..31`: 16 tire temp samples as `i16` little-endian deci-C. Bytes `32..63`: 16 brake temp samples as `i16` little-endian deci-C |
 | `CMD_SPEED_DATA`           | `0xD203` | `1101001000000011`   | Response carrying Wheel Speed data        | `TBD`   | TBD: wheel speed sample payload      |
 | `CMD_RIDE_HEIGHT_DATA`     | `0xD204` | `1101001000000100`   | Response Carrying Ride Height data        | `TBD`   | TBD: ride height sample payload      |
 | `CMD_SET_LED`              | `0xD301` | `1101001100000001`   | Set LED state on a device                 | `1`     | Byte 0: LED state (`0` off, `1` on)  |
