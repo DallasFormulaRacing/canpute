@@ -3,23 +3,25 @@
 #include "ride_height.h"
 #include "VL53L4CD_api.h"
 #include "app_config.h"
-
+#include "VL53L4CD_calibration.h"
 /* Non-static so they can be watched in the debugger during bring-up */
 RideHeightData_t ride_height_latest;
 RideHeightState_t ride_height_state = RIDE_HEIGHT_NOT_STARTED;
 uint16_t ride_height_sensor_id;
 static osMutexId_t ride_height_mutexHandle;
 static bool ride_height_valid = false;
-
+int16_t ride_height_cal_offset;
 bool RideHeight_GetLatest(RideHeightData_t *out)
 {
-    if (out == NULL || ride_height_mutexHandle == NULL) {
+    if (out == NULL || ride_height_mutexHandle == NULL)
+    {
         return false;
     }
 
     osMutexAcquire(ride_height_mutexHandle, osWaitForever);
     bool valid = ride_height_valid;
-    if (valid) {
+    if (valid)
+    {
         *out = ride_height_latest;
     }
     osMutexRelease(ride_height_mutexHandle);
@@ -29,8 +31,12 @@ bool RideHeight_GetLatest(RideHeightData_t *out)
 
 static int16_t RideHeight_LookupOffset(void)
 {
-    for (size_t i = 0; i < sizeof(RideHeight_Offset_Table) / sizeof(RideHeight_Offset_Table[0]); i++) {
-        if (RideHeight_Offset_Table[i].nodeType == self_node_id) {
+    for (size_t i = 0; i < sizeof(RideHeight_Offset_Table) /
+                               sizeof(RideHeight_Offset_Table[0]);
+         i++)
+    {
+        if (RideHeight_Offset_Table[i].nodeType == self_node_id)
+        {
             return RideHeight_Offset_Table[i].offset_mm;
         }
     }
@@ -45,22 +51,35 @@ static RideHeightState_t RideHeight_Init(void)
     // Sensor boot time is 1.2 ms max after power up
     osDelay(2);
 
-    if (VL53L4CD_GetSensorId(RIDE_HEIGHT_I2C_ADDR, &ride_height_sensor_id) != VL53L4CD_ERROR_NONE ||
-        ride_height_sensor_id != RIDE_HEIGHT_SENSOR_ID) {
+    if (VL53L4CD_GetSensorId(RIDE_HEIGHT_I2C_ADDR, &ride_height_sensor_id) !=
+            VL53L4CD_ERROR_NONE ||
+        ride_height_sensor_id != RIDE_HEIGHT_SENSOR_ID)
+    {
         return RIDE_HEIGHT_ERR_NO_SENSOR;
     }
 
     if (VL53L4CD_SensorInit(RIDE_HEIGHT_I2C_ADDR) != VL53L4CD_ERROR_NONE ||
-        VL53L4CD_SetRangeTiming(RIDE_HEIGHT_I2C_ADDR, RIDE_HEIGHT_TIMING_BUDGET_MS,
-                                RIDE_HEIGHT_INTER_MEAS_MS) != VL53L4CD_ERROR_NONE ||
-        VL53L4CD_SetOffset(RIDE_HEIGHT_I2C_ADDR, RIDE_HEIGHT_OFFSET_MM) != VL53L4CD_ERROR_NONE) {
+        VL53L4CD_SetRangeTiming(
+            RIDE_HEIGHT_I2C_ADDR, RIDE_HEIGHT_TIMING_BUDGET_MS,
+            RIDE_HEIGHT_INTER_MEAS_MS) != VL53L4CD_ERROR_NONE ||
+        VL53L4CD_SetOffset(RIDE_HEIGHT_I2C_ADDR, RideHeight_LookupOffset()) !=
+            VL53L4CD_ERROR_NONE)
+    {
         return RIDE_HEIGHT_ERR_INIT;
     }
 
-    if (VL53L4CD_StartRanging(RIDE_HEIGHT_I2C_ADDR) != VL53L4CD_ERROR_NONE) {
+    if (VL53L4CD_StartRanging(RIDE_HEIGHT_I2C_ADDR) != VL53L4CD_ERROR_NONE)
+    {
         return RIDE_HEIGHT_ERR_START;
     }
-
+    // temp for calibrating the offset we just get the written value
+    if (VL53L4CD_CalibrateOffset(RIDE_HEIGHT_I2C_ADDR, 100,
+                                 &ride_height_cal_offset,
+                                 50) != VL53L4CD_ERROR_NONE)
+    {
+        return RIDE_HEIGHT_ERR_INIT;
+    }
+    __BKPT(0); // wait to read
     return RIDE_HEIGHT_RUNNING;
 }
 
@@ -69,10 +88,15 @@ void start_ride_height(void *argument)
     uint8_t seq = 0;
 
     ride_height_mutexHandle = osMutexNew(NULL);
-    if (ride_height_mutexHandle == NULL) Error_Handler();
+    if (ride_height_mutexHandle == NULL)
+    {
+        Error_Handler();
+    }
 
-    // Keep retrying so an unplugged sensor doesn't take down the rest of the node
-    while ((ride_height_state = RideHeight_Init()) != RIDE_HEIGHT_RUNNING) {
+    // Keep retrying so an unplugged sensor doesn't take down the rest of the
+    // node
+    while ((ride_height_state = RideHeight_Init()) != RIDE_HEIGHT_RUNNING)
+    {
         osDelay(500);
     }
 
@@ -82,8 +106,10 @@ void start_ride_height(void *argument)
         VL53L4CD_ResultsData_t result;
 
         // Polling mode, GPIO1 data ready interrupt is not wired to the MCU
-        if (VL53L4CD_CheckForDataReady(RIDE_HEIGHT_I2C_ADDR, &data_ready) != VL53L4CD_ERROR_NONE ||
-            data_ready == 0U) {
+        if (VL53L4CD_CheckForDataReady(RIDE_HEIGHT_I2C_ADDR, &data_ready) !=
+                VL53L4CD_ERROR_NONE ||
+            data_ready == 0U)
+        {
             osDelay(2);
             continue;
         }
@@ -94,11 +120,11 @@ void start_ride_height(void *argument)
 
         RideHeightData_t sample = {
             .timestamp_ms = osKernelGetTickCount(),
-            .distance_mm  = result.distance_mm,
-            .sigma_mm     = result.sigma_mm,
-            .signal_kcps  = result.signal_rate_kcps,
+            .distance_mm = result.distance_mm,
+            .sigma_mm = result.sigma_mm,
+            .signal_kcps = result.signal_rate_kcps,
             .range_status = result.range_status,
-            .seq          = seq++,
+            .seq = seq++,
         };
 
         osMutexAcquire(ride_height_mutexHandle, osWaitForever);
