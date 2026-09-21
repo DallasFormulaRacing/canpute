@@ -13,4 +13,12 @@ static const UID_Mapping_t Fleet_Table[] = {
     {{0xDEADBEEF, 0xCAFEBABE, 0xFEEDFACE}, NODE_ID_DASH}
 };
 
+// Per-sensor ride height offset, nodes not listed use 0
+static const RideHeightOffset_t RideHeight_Offset_Table[] = {
+    {NODE_ID_FRONT_LEFT,  0},
+    {NODE_ID_FRONT_RIGHT, 0},
+    {NODE_ID_REAR_LEFT,   0},
+    {NODE_ID_REAR_RIGHT,  0}
+};
+
 #endif

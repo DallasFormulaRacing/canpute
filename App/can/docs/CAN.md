@@ -47,7 +47,7 @@
 | `CMD_IMU_DATA`             | `0xD201` | `1101001000000001`   | Response carrying IMU data                | `TBD`   | TBD: IMU sample payload              |
 | `CMD_TEMP_DATA`            | `0xD202` | `1101001000000010`   | Response carrying Temperature data        | `64`    | Bytes `0..31`: 16 tire temp samples as `i16` little-endian deci-C. Bytes `32..63`: 16 brake temp samples as `i16` little-endian deci-C |
 | `CMD_SPEED_DATA`           | `0xD203` | `1101001000000011`   | Response carrying Wheel Speed data        | `TBD`   | TBD: wheel speed sample payload      |
-| `CMD_RIDE_HEIGHT_DATA`     | `0xD204` | `1101001000000100`   | Response Carrying Ride Height data        | `TBD`   | TBD: ride height sample payload      |
+| `CMD_RIDE_HEIGHT_DATA`     | `0xD204` | `1101001000000100`   | Response Carrying Ride Height data        | `12`    | Latest sample, little-endian. Bytes `0..3`: `u32` timestamp ms. Bytes `4..5`: `u16` distance mm (raw, mount offset not removed). Bytes `6..7`: `u16` sigma mm. Bytes `8..9`: `u16` signal rate kcps. Byte `10`: `u8` range status (`0` = valid). Byte `11`: `u8` sequence counter |
 | `CMD_SET_LED`              | `0xD301` | `1101001100000001`   | Set LED state on a device                 | `1`     | Byte 0: LED state (`0` off, `1` on)  |
 | `CMD_RESET_NODE`           | `0xDF01` | `1101111100000001`   | Soft reset a node                         | `0`     | No data                              |
 | `CMD_REQ_UUID`             | `0xDF02` | `1101111100000010`   | Request node UUID                         | `0`     | No data                              |

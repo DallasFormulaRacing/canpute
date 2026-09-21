@@ -28,7 +28,12 @@ int MLX90641_I2CGeneralReset(void)
 {
     uint8_t cmd = 0x06;
 
-    if (HAL_I2C_Master_Transmit(&hi2c1, 0x00, &cmd, 1, MLX90641_I2C_TIMEOUT) != HAL_OK)
+    // I2C1 is shared with the VL53L4CD ride height sensor
+    osMutexAcquire(i2c1MutexHandle, osWaitForever);
+    HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, 0x00, &cmd, 1, MLX90641_I2C_TIMEOUT);
+    osMutexRelease(i2c1MutexHandle);
+
+    if (status != HAL_OK)
     {
         return -1;
     }
@@ -44,8 +49,13 @@ int MLX90641_I2CRead(uint8_t slaveAddr, uint16_t startAddress, uint16_t nMemAddr
     uint16_t bytesToRead = nMemAddressRead * 2;
     static uint8_t i2cData[1664];
 
-    if (HAL_I2C_Mem_Read(&hi2c1, sa, startAddress, I2C_MEMADD_SIZE_16BIT,
-                         i2cData, bytesToRead, MLX90641_I2C_TIMEOUT) != HAL_OK)
+    // I2C1 is shared with the VL53L4CD ride height sensor
+    osMutexAcquire(i2c1MutexHandle, osWaitForever);
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hi2c1, sa, startAddress, I2C_MEMADD_SIZE_16BIT,
+                                                i2cData, bytesToRead, MLX90641_I2C_TIMEOUT);
+    osMutexRelease(i2c1MutexHandle);
+
+    if (status != HAL_OK)
     {
         return -1;
     }
@@ -75,8 +85,13 @@ int MLX90641_I2CWrite(uint8_t slaveAddr, uint16_t writeAddress, uint16_t data)
     cmd[0] = data >> 8;
     cmd[1] = data & 0x00FF;
 
-    if (HAL_I2C_Mem_Write(&hi2c1, sa, writeAddress, I2C_MEMADD_SIZE_16BIT,
-                          cmd, 2, MLX90641_I2C_TIMEOUT) != HAL_OK)
+    // I2C1 is shared with the VL53L4CD ride height sensor
+    osMutexAcquire(i2c1MutexHandle, osWaitForever);
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hi2c1, sa, writeAddress, I2C_MEMADD_SIZE_16BIT,
+                                                 cmd, 2, MLX90641_I2C_TIMEOUT);
+    osMutexRelease(i2c1MutexHandle);
+
+    if (status != HAL_OK)
     {
         return -1;
     }

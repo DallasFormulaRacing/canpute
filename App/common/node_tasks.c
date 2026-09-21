@@ -7,6 +7,7 @@ void start_canfd_rx(void *argument);
 void start_wheel_speed(void *argument);
 void start_tire_temp(void *argument);
 void start_imu(void *argument);
+void start_ride_height(void *argument);
 void StandaloneTimer_Callback(void *argument);
 
 /* Task handles */
@@ -15,9 +16,11 @@ osThreadId_t canfd_rxHandle;
 osThreadId_t wheel_speedHandle;
 osThreadId_t tire_tempHandle;
 osThreadId_t imuHandle;
+osThreadId_t ride_heightHandle;
 
 /* Sync objects */
 osMutexId_t temperatureSpeedDataMutexHandle;
+osMutexId_t i2c1MutexHandle;
 osTimerId_t standaloneTimerHandle;
 osMessageQueueId_t wheelSpeedFrequencyHandle;
 osEventFlagsId_t systemEventFlagsHandle;
@@ -27,11 +30,15 @@ osEventFlagsId_t systemEventFlagsHandle;
 #define WHEEL_SPEED_STACK_SIZE    (256U * 4U)
 #define TIRE_TEMP_STACK_SIZE      (1024U * 4U)
 #define IMU_STACK_SIZE            (2048U * 4U)
+#define RIDE_HEIGHT_STACK_SIZE    (512U * 4U)
 
 void App_RTOS_Init(void)
 {
     temperatureSpeedDataMutexHandle = osMutexNew(NULL);
     if (temperatureSpeedDataMutexHandle == NULL) Error_Handler();
+
+    i2c1MutexHandle = osMutexNew(NULL);
+    if (i2c1MutexHandle == NULL) Error_Handler();
 
     standaloneTimerHandle = osTimerNew(StandaloneTimer_Callback, osTimerPeriodic, NULL, NULL);
     if (standaloneTimerHandle == NULL) Error_Handler();
@@ -50,9 +57,10 @@ void App_RTOS_Init(void)
     wheel_speedHandle = osThreadNew(start_wheel_speed, NULL, &(osThreadAttr_t){ .name = "wheel_speed", .priority = osPriorityLow,          .stack_size = WHEEL_SPEED_STACK_SIZE });
     tire_tempHandle   = osThreadNew(start_tire_temp,   NULL, &(osThreadAttr_t){ .name = "tire_temp",   .priority = osPriorityBelowNormal1, .stack_size = TIRE_TEMP_STACK_SIZE });
     imuHandle         = osThreadNew(start_imu,         NULL, &(osThreadAttr_t){ .name = "imu",         .priority = osPriorityAboveNormal2, .stack_size = IMU_STACK_SIZE });
+    ride_heightHandle = osThreadNew(start_ride_height, NULL, &(osThreadAttr_t){ .name = "ride_height", .priority = osPriorityNormal,       .stack_size = RIDE_HEIGHT_STACK_SIZE });
 
     if (canfd_txHandle == NULL || canfd_rxHandle == NULL || wheel_speedHandle == NULL ||
-        tire_tempHandle == NULL || imuHandle == NULL)
+        tire_tempHandle == NULL || imuHandle == NULL || ride_heightHandle == NULL)
     {
         Error_Handler();
     }

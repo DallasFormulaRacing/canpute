@@ -1,5 +1,6 @@
 #include "command_handler.h"
 #include "imu.h"
+#include "ride_height.h"
 #include <string.h>
 
 
@@ -31,8 +32,13 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             break;
         }
         case CMD_REQ_RIDE_HEIGHT_DATA:
-            osEventFlagsSet(systemEventFlagsHandle, FLAG_PI_SYNC);
+        {
+            RideHeightData_t ride_height;
+            if (RideHeight_GetLatest(&ride_height)) {
+                CAN_Transmit(&hfdcan2, 1, source_id, CMD_RIDE_HEIGHT_DATA, (uint8_t *)&ride_height, FDCAN_DLC_BYTES_12);
+            }
             break;
+        }
 
         case CMD_SET_LED:
             if (data[0] == 1) HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_SET);

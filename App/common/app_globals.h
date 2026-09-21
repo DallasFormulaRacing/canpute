@@ -13,6 +13,7 @@ extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 
 extern osMutexId_t temperatureSpeedDataMutexHandle;
+extern osMutexId_t i2c1MutexHandle;
 extern osEventFlagsId_t systemEventFlagsHandle;
 extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
