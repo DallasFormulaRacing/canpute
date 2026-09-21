@@ -7,6 +7,8 @@ void start_canfd_rx(void *argument);
 void start_wheel_speed(void *argument);
 void start_tire_temp(void *argument);
 void start_imu(void *argument);
+void StartPotReadTask(void *argument);
+void potMutex_init(void);
 void StandaloneTimer_Callback(void *argument);
 
 /* Task handles */
@@ -15,6 +17,7 @@ osThreadId_t canfd_rxHandle;
 osThreadId_t wheel_speedHandle;
 osThreadId_t tire_tempHandle;
 osThreadId_t imuHandle;
+osThreadId_t lin_potHandle;
 
 /* Sync objects */
 osMutexId_t temperatureSpeedDataMutexHandle;
@@ -27,6 +30,7 @@ osEventFlagsId_t systemEventFlagsHandle;
 #define WHEEL_SPEED_STACK_SIZE    (256U * 4U)
 #define TIRE_TEMP_STACK_SIZE      (1024U * 4U)
 #define IMU_STACK_SIZE            (2048U * 4U)
+#define LIN_POT_STACK_SIZE        (256U * 4U)
 
 void App_RTOS_Init(void)
 {
@@ -42,6 +46,8 @@ void App_RTOS_Init(void)
     systemEventFlagsHandle = osEventFlagsNew(NULL);
     if (systemEventFlagsHandle == NULL) Error_Handler();
 
+    potMutex_init();
+
     CAN_RxQueue_Init();
     if (canfd_rx_queueHandle == NULL) Error_Handler();
 
@@ -50,9 +56,10 @@ void App_RTOS_Init(void)
     wheel_speedHandle = osThreadNew(start_wheel_speed, NULL, &(osThreadAttr_t){ .name = "wheel_speed", .priority = osPriorityLow,          .stack_size = WHEEL_SPEED_STACK_SIZE });
     tire_tempHandle   = osThreadNew(start_tire_temp,   NULL, &(osThreadAttr_t){ .name = "tire_temp",   .priority = osPriorityBelowNormal1, .stack_size = TIRE_TEMP_STACK_SIZE });
     imuHandle         = osThreadNew(start_imu,         NULL, &(osThreadAttr_t){ .name = "imu",         .priority = osPriorityAboveNormal2, .stack_size = IMU_STACK_SIZE });
+    lin_potHandle     = osThreadNew(StartPotReadTask,   NULL, &(osThreadAttr_t){ .name = "lin_pot",    .priority = osPriorityBelowNormal, .stack_size = LIN_POT_STACK_SIZE });
 
     if (canfd_txHandle == NULL || canfd_rxHandle == NULL || wheel_speedHandle == NULL ||
-        tire_tempHandle == NULL || imuHandle == NULL)
+        tire_tempHandle == NULL || imuHandle == NULL || lin_potHandle == NULL)
     {
         Error_Handler();
     }
