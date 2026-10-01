@@ -6,8 +6,6 @@
 #include <string.h>
 
 uint8_t imu_frame[IMU_FIFO_FRAME_SIZE];
-float imu_gyro_dps[3];   /* latest gyro sample: X, Y, Z in degrees/sec */
-float imu_accel_g[3];    /* latest accel sample: X, Y, Z in g */
 static osMutexId_t imu_frame_mutexHandle;
 static bool imu_frame_valid = false;
 
@@ -29,7 +27,10 @@ bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len)
 
 void start_imu(void *argument)
 {
-    IMU_Init();
+    // Keep retrying so a missing/miswired IMU doesn't take down the rest of the node
+    while (!IMU_Init()) {
+        osDelay(500);
+    }
     imu_frame_mutexHandle = osMutexNew(NULL);
     if (imu_frame_mutexHandle == NULL) Error_Handler();
 
@@ -71,29 +72,47 @@ void start_imu(void *argument)
             int16_t gx = (int16_t)(current_frame[1] << 8 | current_frame[0]);
             int16_t gy = (int16_t)(current_frame[3] << 8 | current_frame[2]);
             int16_t gz = (int16_t)(current_frame[5] << 8 | current_frame[4]);
-            imu_gyro_dps[0] = asm330lhhx_from_fs2000dps_to_mdps(gx) / 1000.0f;
-            imu_gyro_dps[1] = asm330lhhx_from_fs2000dps_to_mdps(gy) / 1000.0f;
-            imu_gyro_dps[2] = asm330lhhx_from_fs2000dps_to_mdps(gz) / 1000.0f;
+            float gyro_dps[3] = {
+                asm330lhhx_from_fs2000dps_to_mdps(gx) / 1000.0f,
+                asm330lhhx_from_fs2000dps_to_mdps(gy) / 1000.0f,
+                asm330lhhx_from_fs2000dps_to_mdps(gz) / 1000.0f
+            };
 
             /* Convert first accel sample (bytes 30-35) to g */
             int16_t ax = (int16_t)(current_frame[31] << 8 | current_frame[30]);
             int16_t ay = (int16_t)(current_frame[33] << 8 | current_frame[32]);
             int16_t az = (int16_t)(current_frame[35] << 8 | current_frame[34]);
-            imu_accel_g[0] = asm330lhhx_from_fs4g_to_mg(ax) / 1000.0f;
-            imu_accel_g[1] = asm330lhhx_from_fs4g_to_mg(ay) / 1000.0f;
-            imu_accel_g[2] = asm330lhhx_from_fs4g_to_mg(az) / 1000.0f;
+            float accel_g[3] = {
+                asm330lhhx_from_fs4g_to_mg(ax) / 1000.0f,
+                asm330lhhx_from_fs4g_to_mg(ay) / 1000.0f,
+                asm330lhhx_from_fs4g_to_mg(az) / 1000.0f
+            };
 
             /* Feed MotionGC and apply gyro bias correction */
             MGC_input_t gc_in = {
-                .Acc  = { imu_accel_g[0], imu_accel_g[1], imu_accel_g[2] },
-                .Gyro = { imu_gyro_dps[0], imu_gyro_dps[1], imu_gyro_dps[2] }
+                .Acc  = { accel_g[0], accel_g[1], accel_g[2] },
+                .Gyro = { gyro_dps[0], gyro_dps[1], gyro_dps[2] }
             };
             int bias_updated;
             MotionGC_Update(&gc_in, &gyro_bias, &bias_updated);
 
-            imu_gyro_dps[0] -= gyro_bias.GyroBiasX;
-            imu_gyro_dps[1] -= gyro_bias.GyroBiasY;
-            imu_gyro_dps[2] -= gyro_bias.GyroBiasZ;
+            /* Publish to the debug snapshot for GDB / Live Watch */
+            imu_dbg.gyro_raw[0] = gx;
+            imu_dbg.gyro_raw[1] = gy;
+            imu_dbg.gyro_raw[2] = gz;
+            imu_dbg.accel_raw[0] = ax;
+            imu_dbg.accel_raw[1] = ay;
+            imu_dbg.accel_raw[2] = az;
+            imu_dbg.gyro_dps[0] = gyro_dps[0] - gyro_bias.GyroBiasX;
+            imu_dbg.gyro_dps[1] = gyro_dps[1] - gyro_bias.GyroBiasY;
+            imu_dbg.gyro_dps[2] = gyro_dps[2] - gyro_bias.GyroBiasZ;
+            imu_dbg.accel_g[0] = accel_g[0];
+            imu_dbg.accel_g[1] = accel_g[1];
+            imu_dbg.accel_g[2] = accel_g[2];
+            imu_dbg.gyro_bias_dps[0] = gyro_bias.GyroBiasX;
+            imu_dbg.gyro_bias_dps[1] = gyro_bias.GyroBiasY;
+            imu_dbg.gyro_bias_dps[2] = gyro_bias.GyroBiasZ;
+            imu_dbg.frame_count++;
         }
     }
 }

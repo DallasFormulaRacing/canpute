@@ -21,6 +21,9 @@
 #include "i2c.h"
 
 /* USER CODE BEGIN 0 */
+/* Dev board (NUCLEO) has no external I2C2 pull-ups like canpute does.
+ * 1 = enable weak internal pull-ups on PB10/PB3 for bench testing only. */
+#define DEV_BOARD_I2C2_PULLUPS 1
 
 /* USER CODE END 0 */
 
@@ -230,6 +233,14 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
     HAL_NVIC_SetPriority(I2C2_ER_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
   /* USER CODE BEGIN I2C2_MspInit 1 */
+#if DEV_BOARD_I2C2_PULLUPS
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF4_I2C2;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+#endif
 
   /* USER CODE END I2C2_MspInit 1 */
   }

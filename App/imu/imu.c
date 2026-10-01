@@ -7,21 +7,35 @@ static stmdev_ctx_t dev_ctx;
 static uint8_t imu_dma_buf[IMU_FIFO_DMA_FRAME_SIZE];
 static volatile uint8_t imu_dma_in_progress = 0;
 static volatile uint8_t imu_dma_ready = 0;
+// SA0 low -> ADD_L, SA0 high -> ADD_H. Picked in IMU_Init by whichever answers WHO_AM_I.
+static uint16_t imu_i2c_addr = ASM330LHHX_I2C_ADD_L;
+
+#define IMU_RESET_TIMEOUT_MS 100U
+#define IMU_I2C_TIMEOUT_MS   10U
+
+/* used: keep the symbol around for the debugger even if nothing reads it */
+__attribute__((used)) volatile IMU_Debug_t imu_dbg;
 
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp,
                              uint16_t len)
 {
-    HAL_I2C_Mem_Read(handle, ASM330LHHX_I2C_ADD_L, reg,
-                     I2C_MEMADD_SIZE_8BIT, bufp, len, HAL_MAX_DELAY);
+    if (HAL_I2C_Mem_Read(handle, imu_i2c_addr, reg,
+                         I2C_MEMADD_SIZE_8BIT, bufp, len, IMU_I2C_TIMEOUT_MS) != HAL_OK) {
+        imu_dbg.i2c_error_count++;
+        return -1;
+    }
     return 0;
 }
 
 static int32_t platform_write(void *handle, uint8_t reg,
                               const uint8_t *bufp, uint16_t len)
 {
-    HAL_I2C_Mem_Write(handle, ASM330LHHX_I2C_ADD_L, reg,
-                      I2C_MEMADD_SIZE_8BIT, (uint8_t *)bufp, len,
-                      HAL_MAX_DELAY);
+    if (HAL_I2C_Mem_Write(handle, imu_i2c_addr, reg,
+                          I2C_MEMADD_SIZE_8BIT, (uint8_t *)bufp, len,
+                          IMU_I2C_TIMEOUT_MS) != HAL_OK) {
+        imu_dbg.i2c_error_count++;
+        return -1;
+    }
     return 0;
 }
 
@@ -30,7 +44,7 @@ static void platform_delay(uint32_t ms)
     HAL_Delay(ms);
 }
 
-void IMU_Init(void)
+bool IMU_Init(void)
 {
     uint8_t whoamI = 0;
     uint8_t rst = 1;
@@ -42,16 +56,34 @@ void IMU_Init(void)
     // IMU USES i2c2
     dev_ctx.handle    = &hi2c2;
 
-    // Reset before use to ensure imu is in a known state and clear old data
+    imu_dbg.init_ok = 0;
+
+    // Find which address the IMU answers on (depends on how SA0 is strapped)
+    imu_i2c_addr = ASM330LHHX_I2C_ADD_L;
+    asm330lhhx_device_id_get(&dev_ctx, &whoamI);
+    if (whoamI != ASM330LHHX_ID) {
+        imu_i2c_addr = ASM330LHHX_I2C_ADD_H;
+        asm330lhhx_device_id_get(&dev_ctx, &whoamI);
+    }
+    imu_dbg.whoami = whoamI;
+    imu_dbg.i2c_addr = (uint8_t)(imu_i2c_addr >> 1);
+    if (whoamI != ASM330LHHX_ID) {
+        return false;
+    }
+
+    // Reset before use to ensure imu is in a known state and clear old data.
+    // Bounded so a missing/miswired IMU can't hang the task here.
     asm330lhhx_reset_set(&dev_ctx, PROPERTY_ENABLE);
+    uint32_t reset_start = HAL_GetTick();
     do {
         asm330lhhx_reset_get(&dev_ctx, &rst);
-    } while (rst);
+    } while (rst && (HAL_GetTick() - reset_start) < IMU_RESET_TIMEOUT_MS);
 
     // Verify WHO_AM_I
     asm330lhhx_device_id_get(&dev_ctx, &whoamI);
+    imu_dbg.whoami = whoamI;
     if (whoamI != ASM330LHHX_ID) {
-        return;
+        return false;
     }
 
     // Block data update - output regs not updated until read
@@ -76,8 +108,14 @@ void IMU_Init(void)
     int2_route.int2_ctrl.int2_fifo_th = PROPERTY_ENABLE;
     asm330lhhx_pin_int2_route_set(&dev_ctx, &int2_route);
 
+    // Set before the FIFO starts filling so the first watermark edge isn't
+    // dropped by the EXTI guard (INT2 is level, a missed edge never repeats)
+    imu_dbg.init_ok = 1;
+
     // Continuous (stream) mode - oldest data overwritten when full
     asm330lhhx_fifo_mode_set(&dev_ctx, ASM330LHHX_STREAM_MODE);
+
+    return true;
 }
 
 static asm330lhhx_fifo_tag_t IMU_TagFromRaw(uint8_t raw_tag)
@@ -104,13 +142,14 @@ static void IMU_Start_FIFO_DMA(void)
     imu_dma_ready = 0U;
 
     status = HAL_I2C_Mem_Read_DMA(&hi2c2,
-                                  ASM330LHHX_I2C_ADD_L,
+                                  imu_i2c_addr,
                                   ASM330LHHX_FIFO_DATA_OUT_TAG,
                                   I2C_MEMADD_SIZE_8BIT,
                                   imu_dma_buf,
                                   IMU_FIFO_DMA_FRAME_SIZE);
     if (status != HAL_OK) {
         imu_dma_in_progress = 0U;
+        imu_dbg.dma_error_count++;
         (void)osThreadFlagsSet(imuHandle, IMU_THREAD_FLAG_DMA_ERROR);
     }
 }
@@ -143,6 +182,8 @@ void IMU_FIFO_Read(uint8_t *out_buf, uint16_t *out_len)
 
     if (gyro_idx == 5 && accel_idx == 5) {
         *out_len = IMU_FIFO_FRAME_SIZE;
+    } else {
+        imu_dbg.bad_frame_count++;
     }
 
     imu_dma_ready = 0U;
@@ -152,6 +193,11 @@ void IMU_FIFO_Read(uint8_t *out_buf, uint16_t *out_len)
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
     if (GPIO_Pin == I2C2_INT_Pin) {
+        imu_dbg.int_count++;
+        // Ignore edges (e.g. a floating INT pin) until the IMU is configured
+        if (imu_dbg.init_ok == 0U) {
+            return;
+        }
         IMU_Start_FIFO_DMA();
     }
 }
@@ -160,6 +206,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
     if (hi2c->Instance == I2C2) {
         imu_dma_ready = 1U;
+        imu_dbg.dma_done_count++;
         (void)osThreadFlagsSet(imuHandle, IMU_THREAD_FLAG_DMA_READY);
     }
 }
@@ -169,6 +216,7 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
     if (hi2c->Instance == I2C2) {
         imu_dma_ready = 0U;
         imu_dma_in_progress = 0U;
+        imu_dbg.dma_error_count++;
         (void)osThreadFlagsSet(imuHandle, IMU_THREAD_FLAG_DMA_ERROR);
     }
 }
