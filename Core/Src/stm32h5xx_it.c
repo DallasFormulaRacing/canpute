@@ -55,9 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern FDCAN_HandleTypeDef hfdcan2;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
-extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
@@ -165,17 +163,11 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI Line2 interrupt.
+  * @brief This function handles EXTI line 13 interrupt.
   */
-void EXTI2_IRQHandler(void)
+void EXTI13_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
-
-  /* USER CODE END EXTI2_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(I2C2_INT_Pin);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-
-  /* USER CODE END EXTI2_IRQn 1 */
 }
 
 /**
@@ -221,34 +213,6 @@ void TIM6_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles I2C1 Event interrupt.
-  */
-void I2C1_EV_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C1_EV_IRQn 0 */
-
-  /* USER CODE END I2C1_EV_IRQn 0 */
-  HAL_I2C_EV_IRQHandler(&hi2c1);
-  /* USER CODE BEGIN I2C1_EV_IRQn 1 */
-
-  /* USER CODE END I2C1_EV_IRQn 1 */
-}
-
-/**
-  * @brief This function handles I2C1 Error interrupt.
-  */
-void I2C1_ER_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C1_ER_IRQn 0 */
-
-  /* USER CODE END I2C1_ER_IRQn 0 */
-  HAL_I2C_ER_IRQHandler(&hi2c1);
-  /* USER CODE BEGIN I2C1_ER_IRQn 1 */
-
-  /* USER CODE END I2C1_ER_IRQn 1 */
-}
-
-/**
   * @brief This function handles I2C2 Event interrupt.
   */
 void I2C2_EV_IRQHandler(void)
@@ -274,20 +238,6 @@ void I2C2_ER_IRQHandler(void)
   /* USER CODE BEGIN I2C2_ER_IRQn 1 */
 
   /* USER CODE END I2C2_ER_IRQn 1 */
-}
-
-/**
-  * @brief This function handles FDCAN2 interrupt 0.
-  */
-void FDCAN2_IT0_IRQHandler(void)
-{
-  /* USER CODE BEGIN FDCAN2_IT0_IRQn 0 */
-
-  /* USER CODE END FDCAN2_IT0_IRQn 0 */
-  HAL_FDCAN_IRQHandler(&hfdcan2);
-  /* USER CODE BEGIN FDCAN2_IT0_IRQn 1 */
-
-  /* USER CODE END FDCAN2_IT0_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
