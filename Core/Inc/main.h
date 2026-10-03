@@ -59,9 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define GREEN_LED_Pin GPIO_PIN_5
 #define GREEN_LED_GPIO_Port GPIOA
-#define I2C2_INT_Pin GPIO_PIN_2
+#define I2C2_INT_Pin GPIO_PIN_13
 #define I2C2_INT_GPIO_Port GPIOB
-#define I2C2_INT_EXTI_IRQn EXTI2_IRQn
+#define I2C1_INT_Pin GPIO_PIN_2
+#define I2C1_INT_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

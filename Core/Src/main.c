@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os2.h"
+#include "app_freertos.h"
 #include "crc.h"
 #include "fdcan.h"
 #include "gpdma.h"
@@ -56,7 +56,6 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MPU_Config(void);
-void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -108,6 +107,7 @@ int main(void)
   MX_I2C1_Init();
   MX_CRC_Init();
   MX_I2C2_Init();
+  MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -116,10 +116,6 @@ int main(void)
   osKernelInitialize();
   /* Call init function for freertos objects (in app_freertos.c) */
   MX_FREERTOS_Init();
-
-  /* USER CODE BEGIN RTOS_READY */
-  App_Hardware_Init();
-  /* USER CODE END RTOS_READY */
 
   /* Start scheduler */
   osKernelStart();
@@ -258,6 +254,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 /**
   * @brief  This function is executed in case of error occurrence.
+  * @param None
   * @retval None
   */
 void Error_Handler(void)

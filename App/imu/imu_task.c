@@ -29,7 +29,10 @@ bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len)
 
 void start_imu(void *argument)
 {
-    IMU_Init();
+    /* Keep retrying instead of silently parking the task forever. */
+    while (!IMU_Init()) {
+        osDelay(500);
+    }
     imu_frame_mutexHandle = osMutexNew(NULL);
     if (imu_frame_mutexHandle == NULL) Error_Handler();
 
