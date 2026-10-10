@@ -9,11 +9,11 @@
             "cwd": "${workspaceFolder}",
             "executable": "${workspaceFolder}/build/Debug/canpute.elf",
             "device": "STM32H533xx",
-            "gdbPath": "/opt/st/stm32cubeclt_1.22.0/GNU-tools-for-STM32/bin/arm-none-eabi-gdb",
+            "gdbPath": "${userHome}/.local/share/stm32cube/bundles/gnu-gdb-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gdb",
             "serverArgs": ["-m", "1", "-k"],
-            "serverpath": "/opt/st/stm32cubeclt_1.22.0/STLink-gdb-server/bin/ST-LINK_gdbserver",
-            "stm32cubeprogrammer": "/opt/st/stm32cubeclt_1.22.0/STM32CubeProgrammer/bin",
-            "svdFile": "/opt/st/stm32cubeclt_1.22.0/STMicroelectronics_CMSIS_SVD/STM32H533.svd",
+            "serverpath": "${userHome}/.local/share/stm32cube/bundles/stlink-gdbserver/7.14.0+st.2/bin/ST-LINK_gdbserver",
+            "stm32cubeprogrammer": "${userHome}/.local/share/stm32cube/bundles/programmer/2.23.0/bin",
+            "svdFile": "${userHome}/.local/share/stm32cube/packs/STMicroelectronics/stm32h5xx_dfp/1.2.0/SVD/STM32H533.svd",
             "runToEntryPoint": "main",
             "preLaunchTask": "CMake: build Debug"
         }

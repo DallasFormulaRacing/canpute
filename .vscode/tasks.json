@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "CMake: build Debug",
+            "label": "CMake: configure Debug",
             "type": "shell",
             "command": "cmake --preset Debug",
             "options": { "cwd": "${workspaceFolder}" },

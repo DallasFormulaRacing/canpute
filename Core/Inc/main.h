@@ -62,6 +62,9 @@ void Error_Handler(void);
 #define I2C2_INT_Pin GPIO_PIN_2
 #define I2C2_INT_GPIO_Port GPIOB
 #define I2C2_INT_EXTI_IRQn EXTI2_IRQn
+#define I2C1_INT_Pin GPIO_PIN_13
+#define I2C1_INT_GPIO_Port GPIOD
+#define I2C1_INT_EXTI_IRQn EXTI13_IRQn
 
 /* USER CODE BEGIN Private defines */
 

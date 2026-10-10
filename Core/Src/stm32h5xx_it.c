@@ -163,11 +163,19 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI Line2 interrupt.
+  */
+void EXTI2_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(I2C2_INT_Pin);
+}
+
+/**
   * @brief This function handles EXTI line 13 interrupt.
   */
 void EXTI13_IRQHandler(void)
 {
-  HAL_GPIO_EXTI_IRQHandler(I2C2_INT_Pin);
+  HAL_GPIO_EXTI_IRQHandler(I2C1_INT_Pin);
 }
 
 /**
