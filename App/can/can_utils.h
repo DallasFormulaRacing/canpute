@@ -4,6 +4,8 @@
 #include "stm32h5xx_hal.h"
 #include "types.h"
 
+// Set to 1 to run FDCAN2 in internal loopback and send a broadcast PING every second (debug only)
+#define CAN_LOOPBACK_TEST 1
 
 
 // Prototypes

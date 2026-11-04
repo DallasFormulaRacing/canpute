@@ -6,6 +6,10 @@
 void start_canfd_tx(void *argument)
 {
     for(;;) {
+#if CAN_LOOPBACK_TEST
+        uint8_t ping = 0;
+        CAN_Transmit(&hfdcan2, 1, NODE_ID_ALL_NODES, CMD_PING, &ping, FDCAN_DLC_BYTES_1);
+#endif
         osDelay(1000);
     }
 }
