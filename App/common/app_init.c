@@ -3,6 +3,7 @@
 #include "app_globals.h"
 #include "fdcan.h"
 #include "tim.h"
+#include "can_utils.h"
 #include <string.h>
 
 uint32_t current_uid[3];
@@ -69,7 +70,15 @@ void Configure_FDCAN_Filters(void) {
  * @brief Hardware initialization entry point. Should be called in main.c after MX_Init functions and before osKernelStart().
  */
 void App_Hardware_Init(void) {
-    Identify_Self(); 
+    Identify_Self();
+
+#if CAN_LOOPBACK_TEST
+    // Re-init FDCAN2 in internal loopback so it receives its own frames
+    hfdcan2.Init.Mode = FDCAN_MODE_INTERNAL_LOOPBACK;
+    if (HAL_FDCAN_DeInit(&hfdcan2) != HAL_OK || HAL_FDCAN_Init(&hfdcan2) != HAL_OK) {
+        Error_Handler();
+    }
+#endif
 
     Configure_FDCAN_Filters();
 

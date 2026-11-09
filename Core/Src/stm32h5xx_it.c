@@ -61,6 +61,7 @@ extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
+extern FDCAN_HandleTypeDef hfdcan2;
 
 /* USER CODE END EV */
 
@@ -249,5 +250,8 @@ void I2C2_ER_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+void FDCAN2_IT0_IRQHandler(void)
+{
+  HAL_FDCAN_IRQHandler(&hfdcan2);
+}
 /* USER CODE END 1 */

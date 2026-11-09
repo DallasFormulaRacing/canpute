@@ -3,6 +3,10 @@
 #include "main.h"
 #include <string.h>
 
+#ifndef IMU_FIFO_FRAME_SIZE
+#define IMU_FIFO_FRAME_SIZE 60U
+#endif
+
 static stmdev_ctx_t dev_ctx;
 static uint8_t imu_dma_buf[IMU_FIFO_DMA_FRAME_SIZE];
 static volatile uint8_t imu_dma_in_progress = 0;
@@ -147,6 +151,12 @@ void IMU_FIFO_Read(uint8_t *out_buf, uint16_t *out_len)
 
     imu_dma_ready = 0U;
     imu_dma_in_progress = 0U;
+
+    NVIC_DisableIRQ(I2C2_EV_IRQn);
+    if (HAL_GPIO_ReadPin(I2C2_INT_GPIO_Port, I2C2_INT_Pin) == GPIO_PIN_SET) {
+        IMU_Start_FIFO_DMA();
+    }
+    NVIC_EnableIRQ(I2C2_EV_IRQn);
 }
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
