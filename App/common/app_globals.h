@@ -18,5 +18,10 @@ extern osTimerId_t standaloneTimerHandle;
 extern osMessageQueueId_t wheelSpeedFrequencyHandle;
 extern osMessageQueueId_t canfd_rx_queueHandle;
 extern osThreadId_t imuHandle;
-
+extern volatile uint32_t can_tx_status;
+extern volatile uint32_t can_tx_error;
+extern volatile uint32_t debug_rx_level;
+extern volatile uint32_t can_tx_free;
+extern volatile uint32_t debug_start_status;
+extern volatile uint32_t debug_notify_status;
 #endif

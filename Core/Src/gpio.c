@@ -36,6 +36,7 @@
      PA13(JTMS/SWDIO)   ------> DEBUG_JTMS-SWDIO
      PA14(JTCK/SWCLK)   ------> DEBUG_JTCK-SWCLK
      PB3(JTDO/TRACESWO)   ------> DEBUG_JTDO-SWO
+     PB4(NJTRST)   ------> DEBUG_NJTRST
 */
 void MX_GPIO_Init(void)
 {
@@ -44,8 +45,8 @@ void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GREEN_LED_GPIO_Port, GREEN_LED_Pin, GPIO_PIN_RESET);
@@ -57,23 +58,29 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GREEN_LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : GPIO3_Pin */
+  GPIO_InitStruct.Pin = GPIO3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIO3_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GPIO2_Pin GPIO1_Pin */
+  GPIO_InitStruct.Pin = GPIO2_Pin|GPIO1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : I2C2_INT_Pin */
   GPIO_InitStruct.Pin = I2C2_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(I2C2_INT_GPIO_Port, &GPIO_InitStruct);
 
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
-  /*Configure GPIO pin : I2C1_INT_Pin */
-  GPIO_InitStruct.Pin = I2C1_INT_Pin;
+  /*Configure GPIO pin : I2C3_INT_Pin */
+  GPIO_InitStruct.Pin = I2C3_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(I2C1_INT_GPIO_Port, &GPIO_InitStruct);
-
-  HAL_NVIC_SetPriority(EXTI13_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI13_IRQn);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(I2C3_INT_GPIO_Port, &GPIO_InitStruct);
 
 }
 
