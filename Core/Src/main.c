@@ -114,6 +114,11 @@ int main(void)
   MX_FDCAN2_Init();
   /* USER CODE BEGIN 2 */
 
+  if(HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   /* USER CODE END 2 */
 
   /* Init scheduler */

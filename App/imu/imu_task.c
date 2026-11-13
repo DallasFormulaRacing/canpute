@@ -4,6 +4,8 @@
 #include "asm330lhhx_reg.h"
 #include "motion_gc.h"
 #include <string.h>
+#include "can_utils.h"
+#include "command_handler.h"
 
 uint8_t imu_frame[IMU_FIFO_FRAME_SIZE];
 float imu_gyro_dps[3];   /* latest Angular Gyro sample: X, Y, Z in degrees/sec */
@@ -25,6 +27,11 @@ bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len)
     osMutexRelease(imu_frame_mutexHandle);
 
     return valid;
+}
+static void CAN_packInt16LE(uint8_t *buf, int16_t value)
+{
+    buf[0] = (uint8_t)(value & 0xFF);
+    buf[1] = (uint8_t)((value >> 8));
 }
 
 void start_imu(void *argument)
@@ -94,6 +101,26 @@ void start_imu(void *argument)
             imu_gyro_dps[0] -= gyro_bias.GyroBiasX;
             imu_gyro_dps[1] -= gyro_bias.GyroBiasY;
             imu_gyro_dps[2] -= gyro_bias.GyroBiasZ;
+
+            CAN_TxMessage_t msg = {0};
+
+            msg.priority = 1;
+            msg.target = NODE_ID_ALL_NODES;
+            msg.command = CMD_IMU_DATA;
+            msg.dlc = FDCAN_DLC_BYTES_12; /* 3 floats, 4 bytes each */
+
+
+            //Gyroscope XYZ and accelerometer XYZ 
+            for(uint8_t i = 0; i < 3; i++) {
+                int16_t gyro_int = (int16_t)(imu_gyro_dps[i] * 10.0f); // Convert to milli-degrees/sec
+                int16_t accel_int = (int16_t)(imu_accel_g[i] * 1000.0f); // Convert to milli-g
+
+                CAN_packInt16LE(&msg.data[i * 2], gyro_int);
+                CAN_packInt16LE(&msg.data[6 + i * 2], accel_int);
+            }
+
+            //submit the message to the CAN TX queue
+          (void) CAN_QueueMessage(&msg);
         }
     }
 }

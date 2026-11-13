@@ -2,11 +2,14 @@
 #include "app_globals.h"
 #include "MLX90641_API.h"
 #include "MLX90641_I2C_Driver.h"
+#include "can_utils.h"
+#include "command_handler.h"
 
 #define MLX90641_ADDR    0x33
 #define MLX_REFRESH_RATE 0x04  // 8 Hz
 #define EMISSIVITY       0.98f // human skin
 //#define EMISSIVITY       0.95f // rubber tire
+#define CMD_TIRE_TEMP_DATA 0x0101
 
 static int16_t Temperature_ToDeciC(float temperature_c)
 {
@@ -25,6 +28,11 @@ static int16_t Temperature_ToDeciC(float temperature_c)
     }
 
     return (int16_t)(temperature_dC - 0.5f);
+}
+static void CAN_packInt16LE(uint8_t *buf, int16_t value)
+{
+    buf[0] = (uint8_t)(value & 0xFF);
+    buf[1] = (uint8_t)((value >> 8));
 }
 
 void start_tire_temp(void *argument)
@@ -82,11 +90,28 @@ void start_tire_temp(void *argument)
         }
 
         osMutexAcquire(temperatureSpeedDataMutexHandle, osWaitForever);
-        
+
         for (uint8_t i = 0; i < TEMPERATURE_SAMPLE_COUNT; i++) {
             temperatureSpeedData.tireTemperature_dC[i] = tireZones[i];
             temperatureSpeedData.brakeTemperature_dC[i] = 0;
         }
         osMutexRelease(temperatureSpeedDataMutexHandle);
-    }
+
+        
+        CAN_TxMessage_t msg = {0};
+
+        msg.priority = 1;
+        msg.target = NODE_ID_ALL_NODES;
+        msg.command = CMD_TIRE_TEMP_DATA;
+        msg.dlc = FDCAN_DLC_BYTES_32;
+
+/* Each temperature is stored in 0.1°C units */
+for (uint8_t i = 0; i < TEMPERATURE_SAMPLE_COUNT; i++)
+{
+    CAN_packInt16LE(&msg.data[i * 2], tireZones[i]);
 }
+    (void) CAN_QueueMessage(&msg);
+        }
+        
+    }
+
