@@ -6,6 +6,7 @@
 #ifndef IMU_FIFO_FRAME_SIZE
 #define IMU_FIFO_FRAME_SIZE 60U
 #endif
+volatile uint32_t imu_int_pin = 99;
 
 static stmdev_ctx_t dev_ctx;
 static uint8_t imu_dma_buf[IMU_FIFO_DMA_FRAME_SIZE];
@@ -82,6 +83,14 @@ void IMU_Init(void)
 
     // Continuous (stream) mode - oldest data overwritten when full
     asm330lhhx_fifo_mode_set(&dev_ctx, ASM330LHHX_STREAM_MODE);
+
+     imu_int_pin = HAL_GPIO_ReadPin(
+    I2C2_INT_GPIO_Port,
+    I2C2_INT_Pin);
+
+    HAL_Delay(100);
+    imu_int_pin = HAL_GPIO_ReadPin(I2C2_INT_GPIO_Port, I2C2_INT_Pin);
+
 }
 
 static asm330lhhx_fifo_tag_t IMU_TagFromRaw(uint8_t raw_tag)
@@ -113,6 +122,7 @@ static void IMU_Start_FIFO_DMA(void)
                                   I2C_MEMADD_SIZE_8BIT,
                                   imu_dma_buf,
                                   IMU_FIFO_DMA_FRAME_SIZE);
+                                  
     if (status != HAL_OK) {
         imu_dma_in_progress = 0U;
         (void)osThreadFlagsSet(imuHandle, IMU_THREAD_FLAG_DMA_ERROR);

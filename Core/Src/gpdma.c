@@ -36,9 +36,17 @@ void MX_GPDMA1_Init(void)
   __HAL_RCC_GPDMA1_CLK_ENABLE();
 
   /* GPDMA1 interrupt Init */
-    HAL_NVIC_SetPriority(GPDMA1_Channel0_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(GPDMA1_Channel0_IRQn);
+  /* GPDMA1 interrupt Init */
+HAL_NVIC_SetPriority(GPDMA1_Channel0_IRQn, 5, 0);
+HAL_NVIC_EnableIRQ(GPDMA1_Channel0_IRQn);
 
+/* I2C2 error interrupt */
+HAL_NVIC_SetPriority(I2C2_ER_IRQn, 5, 0);
+HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+
+/* I2C2 event interrupt */
+HAL_NVIC_SetPriority(I2C2_EV_IRQn, 5, 0);
+HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
   /* USER CODE BEGIN GPDMA1_Init 1 */
 
   /* USER CODE END GPDMA1_Init 1 */
@@ -51,3 +59,4 @@ void MX_GPDMA1_Init(void)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+

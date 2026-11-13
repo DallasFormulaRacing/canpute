@@ -6,8 +6,8 @@
 #include <string.h>
 
 uint8_t imu_frame[IMU_FIFO_FRAME_SIZE];
-float imu_gyro_dps[3];   /* latest gyro sample: X, Y, Z in degrees/sec */
-float imu_accel_g[3];    /* latest accel sample: X, Y, Z in g */
+float imu_gyro_dps[3];   /* latest Angular Gyro sample: X, Y, Z in degrees/sec */
+float imu_accel_g[3];    /* latest Accelerometer sample: X, Y, Z in g */
 static osMutexId_t imu_frame_mutexHandle;
 static bool imu_frame_valid = false;
 
@@ -75,7 +75,7 @@ void start_imu(void *argument)
             imu_gyro_dps[1] = asm330lhhx_from_fs2000dps_to_mdps(gy) / 1000.0f;
             imu_gyro_dps[2] = asm330lhhx_from_fs2000dps_to_mdps(gz) / 1000.0f;
 
-            /* Convert first accel sample (bytes 30-35) to g */
+            /* Convert first accel sample (bytes 30-35) to imu_accel_g[2]g */
             int16_t ax = (int16_t)(current_frame[31] << 8 | current_frame[30]);
             int16_t ay = (int16_t)(current_frame[33] << 8 | current_frame[32]);
             int16_t az = (int16_t)(current_frame[35] << 8 | current_frame[34]);

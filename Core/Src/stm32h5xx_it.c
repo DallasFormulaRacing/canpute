@@ -56,7 +56,6 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
-extern I2C_HandleTypeDef hi2c2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
 
@@ -164,22 +163,6 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line 8 interrupt.
-  */
-void EXTI8_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(I2C3_INT_Pin);
-}
-
-/**
-  * @brief This function handles EXTI line 13 interrupt.
-  */
-void EXTI13_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(I2C2_INT_Pin);
-}
-
-/**
   * @brief This function handles GPDMA1 Channel 0 global interrupt.
   */
 void GPDMA1_Channel0_IRQHandler(void)
@@ -221,37 +204,29 @@ void TIM6_IRQHandler(void)
   /* USER CODE END TIM6_IRQn 1 */
 }
 
-/**
-  * @brief This function handles I2C2 Event interrupt.
-  */
-void I2C2_EV_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C2_EV_IRQn 0 */
-
-  /* USER CODE END I2C2_EV_IRQn 0 */
-  HAL_I2C_EV_IRQHandler(&hi2c2);
-  /* USER CODE BEGIN I2C2_EV_IRQn 1 */
-
-  /* USER CODE END I2C2_EV_IRQn 1 */
-}
-
-/**
-  * @brief This function handles I2C2 Error interrupt.
-  */
-void I2C2_ER_IRQHandler(void)
-{
-  /* USER CODE BEGIN I2C2_ER_IRQn 0 */
-
-  /* USER CODE END I2C2_ER_IRQn 0 */
-  HAL_I2C_ER_IRQHandler(&hi2c2);
-  /* USER CODE BEGIN I2C2_ER_IRQn 1 */
-
-  /* USER CODE END I2C2_ER_IRQn 1 */
-}
-
 /* USER CODE BEGIN 1 */
 void FDCAN2_IT0_IRQHandler(void)
 {
   HAL_FDCAN_IRQHandler(&hfdcan2);
 }
+void EXTI13_IRQHandler(void)
+{
+    HAL_GPIO_EXTI_IRQHandler(I2C2_INT_Pin);
+}
+
+
+extern I2C_HandleTypeDef hi2c2;
+
+void I2C2_EV_IRQHandler(void)
+{
+    HAL_I2C_EV_IRQHandler(&hi2c2);
+}
+
+void I2C2_ER_IRQHandler(void)
+{
+    HAL_I2C_ER_IRQHandler(&hi2c2);
+}
 /* USER CODE END 1 */
+
+
+/* USER CODE END 1 mx*/

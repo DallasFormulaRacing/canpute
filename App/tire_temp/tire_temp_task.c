@@ -42,6 +42,7 @@ void start_tire_temp(void *argument)
     for (;;)
     {
         int status = MLX90641_GetFrameData(MLX90641_ADDR, frameData);
+        
         if (status < 0) {
             osDelay(100);
             continue;
@@ -51,6 +52,7 @@ void start_tire_temp(void *argument)
         float tr = ta - 8.0f;
 
         MLX90641_CalculateTo(frameData, &mlxParams, EMISSIVITY, tr, tempGrid);
+
         MLX90641_BadPixelsCorrection(mlxParams.brokenPixel, tempGrid);
 
         int16_t tireZones[TEMPERATURE_SAMPLE_COUNT];
@@ -80,6 +82,7 @@ void start_tire_temp(void *argument)
         }
 
         osMutexAcquire(temperatureSpeedDataMutexHandle, osWaitForever);
+        
         for (uint8_t i = 0; i < TEMPERATURE_SAMPLE_COUNT; i++) {
             temperatureSpeedData.tireTemperature_dC[i] = tireZones[i];
             temperatureSpeedData.brakeTemperature_dC[i] = 0;
