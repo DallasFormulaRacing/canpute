@@ -66,7 +66,8 @@ void MX_FDCAN1_Init(void)
 
 }
 /* FDCAN2 init function */
-void MX_FDCAN2_Init(void)
+void 
+MX_FDCAN2_Init(void)
 {
 
   /* USER CODE BEGIN FDCAN2_Init 0 */
