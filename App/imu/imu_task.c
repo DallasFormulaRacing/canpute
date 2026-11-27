@@ -28,9 +28,17 @@ bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len)
     return valid;
 }
 
+/* No FIFO batch for this long (one batch is ~12 ms): the IMU is missing, was
+ * unplugged, or the bus hung. Set it up again. */
+#define IMU_NO_DATA_TIMEOUT_MS  500U
+
 void start_imu(void *argument)
 {
-    IMU_Init();
+    /* Keep trying: a board can boot without the IMU plugged in, or with the bus
+     * still held by an IMU that was mid-transfer when the MCU reset. */
+    while (!IMU_Init()) {
+        osDelay(IMU_NO_DATA_TIMEOUT_MS);
+    }
     imu_frame_mutexHandle = osMutexNew(NULL);
     if (imu_frame_mutexHandle == NULL) Error_Handler();
 
@@ -52,9 +60,12 @@ void start_imu(void *argument)
         uint8_t current_frame[IMU_FIFO_FRAME_SIZE];
         uint32_t flags = osThreadFlagsWait(IMU_THREAD_FLAG_DMA_READY | IMU_THREAD_FLAG_DMA_ERROR,
                                            osFlagsWaitAny,
-                                           osWaitForever);
+                                           IMU_NO_DATA_TIMEOUT_MS);
 
-        if ((flags & IMU_THREAD_FLAG_DMA_ERROR) != 0U) {
+        if ((flags & osFlagsError) != 0U || (flags & IMU_THREAD_FLAG_DMA_ERROR) != 0U) {
+            /* Timeout or I2C error: no data is coming. Recover the bus and set
+             * the IMU up again (the ev27 Status shows it unhealthy meanwhile). */
+            (void)IMU_Init();
             continue;
         }
 

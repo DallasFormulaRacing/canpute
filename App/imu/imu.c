@@ -1,6 +1,7 @@
 #include "imu.h"
 #include "app_globals.h"
 #include "main.h"
+#include "i2c.h"
 #include <string.h>
 
 #ifndef IMU_FIFO_FRAME_SIZE
@@ -11,6 +12,8 @@ static stmdev_ctx_t dev_ctx;
 static uint8_t imu_dma_buf[IMU_FIFO_DMA_FRAME_SIZE];
 static volatile uint8_t imu_dma_in_progress = 0;
 static volatile uint8_t imu_dma_ready = 0;
+
+static void IMU_Start_FIFO_DMA(void);
 
 /* Short timeout so a missing/unplugged IMU can't hang the (high-priority) IMU task. */
 #define IMU_I2C_TIMEOUT_MS 10U
@@ -35,11 +38,68 @@ static void platform_delay(uint32_t ms)
     HAL_Delay(ms);
 }
 
-void IMU_Init(void)
+/* Busy-wait of a few microseconds (240 MHz core), for bit-banging the bus. */
+static void bus_delay(void)
+{
+    for (volatile uint32_t i = 0; i < 1000U; i++) {
+        __NOP();
+    }
+}
+
+/*
+ * I2C bus recovery. A reset (dashboard Reboot, watchdog, debugger) can land in
+ * the middle of a FIFO DMA read. The MCU stops clocking but the IMU does not
+ * reset, so it keeps driving SDA low for the bit it was sending, and every
+ * transfer after the reboot fails until the IMU loses power. Clock SCL by hand
+ * until the IMU lets go of SDA (at most 9 clocks), send a STOP, then set the
+ * peripheral up again.
+ */
+static void IMU_I2C_BusRecover(void)
+{
+    GPIO_InitTypeDef g = {0};
+
+    (void)HAL_I2C_DeInit(&hi2c2);   /* also stops the DMA and the I2C2 IRQs */
+    imu_dma_in_progress = 0U;
+    imu_dma_ready = 0U;
+
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10 | GPIO_PIN_12, GPIO_PIN_SET);   /* SCL PB10, SDA PB12 */
+    g.Pin = GPIO_PIN_10 | GPIO_PIN_12;
+    g.Mode = GPIO_MODE_OUTPUT_OD;
+    g.Pull = GPIO_NOPULL;
+    g.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &g);
+    bus_delay();
+
+    for (int i = 0; i < 9 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == GPIO_PIN_RESET; i++) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+        bus_delay();
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+        bus_delay();
+    }
+
+    /* STOP: SDA low -> high while SCL is high. */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+    bus_delay();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+    bus_delay();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+    bus_delay();
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+    bus_delay();
+
+    MX_I2C2_Init();   /* pins back to AF4, DMA linked again, IRQs on */
+}
+
+bool IMU_Init(void)
 {
     uint8_t whoamI = 0;
     uint8_t rst = 1;
     asm330lhhx_pin_int2_route_t int2_route = {0};
+
+    /* No FIFO interrupt while the bus is reset and the IMU is set up. */
+    HAL_NVIC_DisableIRQ(I2C2_INT_EXTI_IRQn);
+    IMU_I2C_BusRecover();
 
     dev_ctx.write_reg = platform_write;
     dev_ctx.read_reg  = platform_read;
@@ -50,24 +110,23 @@ void IMU_Init(void)
     // Reset before use to ensure imu is in a known state and clear old data
     // If the IMU doesn't answer (not plugged in), give up instead of spinning forever.
     if (asm330lhhx_reset_set(&dev_ctx, PROPERTY_ENABLE) != 0) {
-        return;
+        return false;
     }
     for (int tries = 0; rst && tries < 50; tries++) {
         if (asm330lhhx_reset_get(&dev_ctx, &rst) != 0) {
-            return;
+            return false;
         }
         if (rst) {
             platform_delay(1);
         }
     }
     if (rst) {
-        return;
+        return false;
     }
 
     // Verify WHO_AM_I
-    asm330lhhx_device_id_get(&dev_ctx, &whoamI);
-    if (whoamI != ASM330LHHX_ID) {
-        return;
+    if (asm330lhhx_device_id_get(&dev_ctx, &whoamI) != 0 || whoamI != ASM330LHHX_ID) {
+        return false;
     }
 
     // Block data update - output regs not updated until read
@@ -93,7 +152,18 @@ void IMU_Init(void)
     asm330lhhx_pin_int2_route_set(&dev_ctx, &int2_route);
 
     // Continuous (stream) mode - oldest data overwritten when full
-    asm330lhhx_fifo_mode_set(&dev_ctx, ASM330LHHX_STREAM_MODE);
+    if (asm330lhhx_fifo_mode_set(&dev_ctx, ASM330LHHX_STREAM_MODE) != 0) {
+        return false;
+    }
+
+    /* The watermark interrupt is a rising edge: if INT2 is already high we
+     * would never see one, so start the first read by hand. */
+    __HAL_GPIO_EXTI_CLEAR_RISING_IT(I2C2_INT_Pin);
+    HAL_NVIC_EnableIRQ(I2C2_INT_EXTI_IRQn);
+    if (HAL_GPIO_ReadPin(I2C2_INT_GPIO_Port, I2C2_INT_Pin) == GPIO_PIN_SET) {
+        IMU_Start_FIFO_DMA();
+    }
+    return true;
 }
 
 static asm330lhhx_fifo_tag_t IMU_TagFromRaw(uint8_t raw_tag)

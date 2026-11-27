@@ -13,7 +13,7 @@
 #define IMU_THREAD_FLAG_DMA_READY   (1U << 0)
 #define IMU_THREAD_FLAG_DMA_ERROR   (1U << 1)
 
-void IMU_Init(void);
+bool IMU_Init(void);   // true once the IMU answered WHO_AM_I and is configured
 void IMU_FIFO_Read(uint8_t *out_buf, uint16_t *out_len);
 bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len);
 
