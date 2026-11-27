@@ -5,6 +5,7 @@
 #include "motion_gc.h"
 #include "ev27_daq.h"
 #include <string.h>
+#include <math.h>
 
 uint8_t imu_frame[IMU_FIFO_FRAME_SIZE];
 float imu_gyro_dps[3];   /* latest gyro sample: X, Y, Z in degrees/sec */
@@ -26,6 +27,90 @@ bool IMU_GetLatestFrame(uint8_t *out_buf, uint16_t out_len)
     osMutexRelease(imu_frame_mutexHandle);
 
     return valid;
+}
+
+/* ---------------------------------------------------------------------------
+ * Level calibration (mount tilt).
+ *
+ * At rest the accelerometer reads +1 g on whatever axis points up. If the board
+ * isn't mounted flat, part of that lands in X/Y and the G meter sits off centre.
+ * After boot, once the IMU has been still for LEVEL_BATCHES batches (~1.2 s), the
+ * average accel vector is taken as "up" and a rotation R that turns it onto +Z
+ * is applied to every sample after that (accel and gyro). Gravity then stays in
+ * Z, X/Y read 0 g at rest, and real motion is still measured (this is a rotation,
+ * not an offset, so braking on a tilted mount isn't mixed into the wrong axis).
+ *
+ * Limits: gravity can't tell which way is forward, so X/Y keep the board's own
+ * heading (the yaw mount config record is still TBD). If the car is on a slope
+ * at boot, that slope is calibrated out as "level".
+ * ------------------------------------------------------------------------- */
+#define LEVEL_BATCHES        100U    /* ~1.2 s of still batches */
+#define LEVEL_GYRO_STILL_DPS 3.0f    /* |gyro| below this counts as still */
+#define LEVEL_ACC_TOL_G      0.05f   /* | |accel| - 1 g | below this counts as still */
+
+static float level_R[3][3] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
+static bool level_done = false;
+static float level_sum[3];
+static uint32_t level_n;
+
+static void level_compute(const float up[3])
+{
+    float n = sqrtf(up[0] * up[0] + up[1] * up[1] + up[2] * up[2]);
+    if (n < 0.5f) {
+        return;
+    }
+    const float u[3] = { up[0] / n, up[1] / n, up[2] / n };
+    /* Rotation taking u onto z = (0,0,1), Rodrigues: v = u x z, c = u . z,
+     * R = I + [v]x + [v]x^2 / (1 + c). */
+    const float c = u[2];
+    if (c < -0.999f) {
+        /* Mounted upside down: 180 deg about X. */
+        const float flip[3][3] = { {1, 0, 0}, {0, -1, 0}, {0, 0, -1} };
+        memcpy(level_R, flip, sizeof(level_R));
+    } else {
+        const float vx = u[1], vy = -u[0];   /* u x z, vz = 0 */
+        const float k = 1.0f / (1.0f + c);
+        level_R[0][0] = 1.0f - k * vy * vy;
+        level_R[0][1] = k * vx * vy;
+        level_R[0][2] = vy;
+        level_R[1][0] = k * vx * vy;
+        level_R[1][1] = 1.0f - k * vx * vx;
+        level_R[1][2] = -vx;
+        level_R[2][0] = -vy;
+        level_R[2][1] = vx;
+        level_R[2][2] = 1.0f - k * (vx * vx + vy * vy);
+    }
+    level_done = true;
+}
+
+/* Feed one batch average; collects still batches until the level is known. */
+static void level_update(const float acc[3], const float gyr[3])
+{
+    if (level_done) {
+        return;
+    }
+    const float g = sqrtf(gyr[0] * gyr[0] + gyr[1] * gyr[1] + gyr[2] * gyr[2]);
+    const float a = sqrtf(acc[0] * acc[0] + acc[1] * acc[1] + acc[2] * acc[2]);
+    if (g > LEVEL_GYRO_STILL_DPS || fabsf(a - 1.0f) > LEVEL_ACC_TOL_G) {
+        level_sum[0] = level_sum[1] = level_sum[2] = 0.0f;   /* moved: start over */
+        level_n = 0;
+        return;
+    }
+    for (int i = 0; i < 3; i++) {
+        level_sum[i] += acc[i];
+    }
+    if (++level_n >= LEVEL_BATCHES) {
+        const float up[3] = { level_sum[0] / level_n, level_sum[1] / level_n, level_sum[2] / level_n };
+        level_compute(up);
+    }
+}
+
+static void level_apply(float v[3])
+{
+    const float x = v[0], y = v[1], z = v[2];
+    for (int i = 0; i < 3; i++) {
+        v[i] = level_R[i][0] * x + level_R[i][1] * y + level_R[i][2] * z;
+    }
 }
 
 /* No FIFO batch for this long (one batch is ~12 ms): the IMU is missing, was
@@ -124,6 +209,13 @@ void start_imu(void *argument)
             gyr_avg[0] -= gyro_bias.GyroBiasX;
             gyr_avg[1] -= gyro_bias.GyroBiasY;
             gyr_avg[2] -= gyro_bias.GyroBiasZ;
+
+            /* Mount tilt: level once still after boot, then rotate every
+             * sample so gravity is on +Z and X/Y read 0 g at rest. Until then
+             * the raw (tilted) axes are sent. */
+            level_update(acc_avg, gyr_avg);
+            level_apply(acc_avg);
+            level_apply(gyr_avg);
             ev27_daq_imu(acc_avg, gyr_avg);
         }
     }
