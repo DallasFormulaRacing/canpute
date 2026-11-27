@@ -51,6 +51,18 @@ void Process_CAN_Command(uint32_t ext_id, uint8_t* data) {
             // Reboot into bootloader
             HAL_NVIC_SystemReset();
             break;
+
+        // ezfd bootloader protocol, used by the Pi to reflash this node
+        case EZFD_CMD_PING: {
+            uint8_t status = 1; // 1 = application running (the bootloader answers 0)
+            CAN_Transmit(&hfdcan2, 1, source_id, EZFD_CMD_PING, &status, FDCAN_DLC_BYTES_1);
+            break;
+        }
+        case EZFD_CMD_REBOOT:
+            // The bootloader sends FirmwareUpdateQuery on the way up; the Pi
+            // answers it and the update starts. No reply needed here.
+            HAL_NVIC_SystemReset();
+            break;
         default:
             break;
     }

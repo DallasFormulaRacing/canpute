@@ -35,6 +35,10 @@
     {
       "name": "st-arm-clang-19_1_6-description",
       "version": "0.0.5+st.1"
+    },
+    {
+      "name": "st-arm-clang-21_1_1-description",
+      "version": "1.0.1+st.1"
     }
   ]
 }

@@ -4,6 +4,7 @@
 #include "fdcan.h"
 #include "tim.h"
 #include "can_utils.h"
+#include "ev27_daq.h"
 #include <string.h>
 
 uint32_t current_uid[3];
@@ -25,7 +26,9 @@ void Identify_Self(void) {
         }
     }
     
-    self_node_id = NODE_ID_UNKNOWN; // Node not recognized
+    // Not in the fleet table: use the ezfd bootloader's default address so the
+    // board answers at the same address in the app and in the bootloader.
+    self_node_id = NODE_ID_EZFD_DEFAULT;
 }
 
 
@@ -64,6 +67,9 @@ void Configure_FDCAN_Filters(void) {
     if (HAL_FDCAN_ConfigFilter(&hfdcan2, &filter2) != HAL_OK) {
         Error_Handler();
     }
+
+    // ev27-can main bus: standard IDs (TimeSync, Command), from standard filter 0.
+    ev27_daq_config_filters(&hfdcan2, 0);
 }
 
 /**
@@ -71,6 +77,7 @@ void Configure_FDCAN_Filters(void) {
  */
 void App_Hardware_Init(void) {
     Identify_Self();
+    ev27_daq_hw_init();   // ev27 address/slot from self_node_id, 1 MHz TIM2 for car time
 
 #if CAN_LOOPBACK_TEST
     // Re-init FDCAN2 in internal loopback so it receives its own frames
@@ -89,6 +96,16 @@ void App_Hardware_Init(void) {
     }
 
     if (HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1) != HAL_OK) {
+        Error_Handler();
+    }
+
+    // Transmitter delay compensation: needed for a 5 Mbit/s data phase, or this
+    // node sees bit errors in its own data bits and destroys every FD frame it
+    // sends with data (receivers log form errors). The ezfd bootloader enables
+    // it too. Offset = DataPrescaler * DataTimeSeg1, as in ST's FDCAN examples.
+    if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan2,
+            hfdcan2.Init.DataPrescaler * hfdcan2.Init.DataTimeSeg1, 0) != HAL_OK ||
+        HAL_FDCAN_EnableTxDelayCompensation(&hfdcan2) != HAL_OK) {
         Error_Handler();
     }
 

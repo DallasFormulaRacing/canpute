@@ -2,6 +2,7 @@
 #include "app_globals.h"
 #include "MLX90641_API.h"
 #include "MLX90641_I2C_Driver.h"
+#include "ev27_daq.h"
 
 #define MLX90641_ADDR    0x33
 #define MLX_REFRESH_RATE 0x04  // 8 Hz
@@ -78,6 +79,19 @@ void start_tire_temp(void *argument)
                 zoneIdx++;
             }
         }
+
+        /* ev27 TireTemp: each of the 16 columns averaged over the 12 rows.
+         * Column 0 is reported as the inner edge; flip here if the sensor is
+         * mounted the other way round. */
+        int16_t columns[16];
+        for (uint8_t col = 0; col < 16U; col++) {
+            float sum = 0.0f;
+            for (uint8_t row = 0; row < 12U; row++) {
+                sum += tempGrid[(row * 16U) + col];
+            }
+            columns[col] = Temperature_ToDeciC(sum / 12.0f);
+        }
+        ev27_daq_tire_temp(columns);
 
         osMutexAcquire(temperatureSpeedDataMutexHandle, osWaitForever);
         for (uint8_t i = 0; i < TEMPERATURE_SAMPLE_COUNT; i++) {

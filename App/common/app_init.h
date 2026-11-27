@@ -22,7 +22,8 @@ void Configure_FDCAN_Filters(void);
 
 /**
  * @brief Reads the STM32 unique ID and maps it to a predefined NodeHardwareID_t.
- * If no match is found, self_node_id is set to NODE_ID_UNKNOWN.
+ * If no match is found, self_node_id is set to NODE_ID_EZFD_DEFAULT (0x1F),
+ * the address the ezfd bootloader uses for an unknown board.
  */
 void Identify_Self(void);
 

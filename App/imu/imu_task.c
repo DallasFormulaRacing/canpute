@@ -3,6 +3,7 @@
 #include "imu.h"
 #include "asm330lhhx_reg.h"
 #include "motion_gc.h"
+#include "ev27_daq.h"
 #include <string.h>
 
 uint8_t imu_frame[IMU_FIFO_FRAME_SIZE];
@@ -94,6 +95,25 @@ void start_imu(void *argument)
             imu_gyro_dps[0] -= gyro_bias.GyroBiasX;
             imu_gyro_dps[1] -= gyro_bias.GyroBiasY;
             imu_gyro_dps[2] -= gyro_bias.GyroBiasZ;
+
+            /* ev27 Imu: average of the 5 samples in this batch (~83 Hz), gyro
+             * bias removed. Sensor axes as mounted: there is no mount rotation
+             * (config record) yet, so this is not the vehicle frame. */
+            float acc_avg[3] = {0}, gyr_avg[3] = {0};
+            for (uint8_t k = 0; k < 5U; k++) {
+                const uint8_t *g = &current_frame[k * 6U];
+                const uint8_t *a = &current_frame[30U + k * 6U];
+                for (uint8_t ax_i = 0; ax_i < 3U; ax_i++) {
+                    int16_t graw = (int16_t)(g[ax_i * 2U + 1U] << 8 | g[ax_i * 2U]);
+                    int16_t araw = (int16_t)(a[ax_i * 2U + 1U] << 8 | a[ax_i * 2U]);
+                    gyr_avg[ax_i] += asm330lhhx_from_fs2000dps_to_mdps(graw) / 5000.0f;
+                    acc_avg[ax_i] += asm330lhhx_from_fs4g_to_mg(araw) / 5000.0f;
+                }
+            }
+            gyr_avg[0] -= gyro_bias.GyroBiasX;
+            gyr_avg[1] -= gyro_bias.GyroBiasY;
+            gyr_avg[2] -= gyro_bias.GyroBiasZ;
+            ev27_daq_imu(acc_avg, gyr_avg);
         }
     }
 }

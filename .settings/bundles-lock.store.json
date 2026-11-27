@@ -238,6 +238,10 @@
       "selected_by": [
         {
           "name": "st-arm-clang-21_1_1-description",
+          "version": "1.0.1+st.1"
+        },
+        {
+          "name": "st-arm-clang-21_1_1-description",
           "version": ">=0.0.1"
         }
       ]

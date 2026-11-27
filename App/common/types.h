@@ -35,10 +35,20 @@ typedef enum {
     NODE_ID_RASPI       = 0x1E, // 11110 (Node 30, reserved for Raspberry Pi)
     NODE_ID_DASH        = 0x1D, //  11101 (Node 29, reserved for Dashboard)
     NODE_ID_BMS         = 0x1F, // 11111 (Node 31, reserved for Battery Management System)
-    NODE_ID_UNKNOWN     = 0x00
+    NODE_ID_UNKNOWN     = 0x00,
+    // ezfd bootloader address for a board that isn't in its UID table. The app
+    // uses the same one so the Pi reaches the board at one address in both
+    // bootloader and app (ezfd-bootloader -n 1F, dashboard node 0x1F).
+    NODE_ID_EZFD_DEFAULT = 0x1F
 } NodeHardwareID_t;
 
 typedef enum {
+    // ezfd bootloader protocol (schommie/ezfd-bootloader-host src/protocol.rs).
+    // The app answers these so the Pi can reflash it over CAN without a power cycle.
+    EZFD_CMD_PING           = 0x0040, // reply EZFD_CMD_PING, data[0] = 1 (app running; bootloader replies 0)
+    EZFD_CMD_REBOOT         = 0x004D, // reset into the bootloader
+    APP_CMD_HEARTBEAT       = 0x0050, // 1 Hz to the Pi: "APP", APP_FW_VERSION, counter (same as ezfd-test-app)
+
     CMD_PING                = 0xA001,
     CMD_PONG                = 0xA002,
 
@@ -79,6 +89,9 @@ typedef enum {
 } CAN_SystemMode_t;
 typedef struct {
       uint32_t id;
+      uint32_t time_us;   // ev27_daq_time_us() read first thing in the RX interrupt (car time sync)
+      uint8_t  extended;  // 1 = 29-bit ID (ezfd bootloader / DFR commands), 0 = 11-bit (ev27-can)
+      uint8_t  len;       // payload bytes
       uint8_t  data[64];
 } CAN_RXMsg_t;
 

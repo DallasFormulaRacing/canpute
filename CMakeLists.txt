@@ -42,11 +42,32 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+# ev27-can (CAN database, generated pack/unpack code, ev27_node). Built from a
+# checkout next to this repo for now; switch to a lib/ev27-can submodule later:
+#   cmake --preset Release -DEV27_CAN_DIR=<path>
+set(EV27_CAN_DIR "${CMAKE_SOURCE_DIR}/../ev27-can" CACHE PATH "ev27-can checkout")
+if(NOT EXISTS "${EV27_CAN_DIR}/generated/c/ev27_main.c")
+    message(FATAL_ERROR "ev27-can not found at ${EV27_CAN_DIR}; set -DEV27_CAN_DIR=<path to ev27-can>")
+endif()
+
+# Git hash reported in ev27 Status (first 8 hex digits; 0 if git isn't available)
+execute_process(
+    COMMAND git rev-parse --short=8 HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE CANPUTE_GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+if(NOT CANPUTE_GIT_HASH MATCHES "^[0-9a-f]+$")
+    set(CANPUTE_GIT_HASH "0")
+endif()
+
 # Add sources to executable
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "App/*.c")
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${APP_SOURCES}
+    ${EV27_CAN_DIR}/generated/c/ev27_main.c
+    ${EV27_CAN_DIR}/node/ev27_node.c
 )
 
 # Add include paths
@@ -59,6 +80,8 @@ endforeach()
 list(REMOVE_DUPLICATES APP_INCLUDE_DIRS)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${APP_INCLUDE_DIRS}
+    ${EV27_CAN_DIR}/generated/c
+    ${EV27_CAN_DIR}/node
 )
 
 # Add project symbols (macros)
@@ -69,6 +92,15 @@ else()
 endif()
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+    VECT_TAB_OFFSET=${VECT_OFFSET}
+    EV27_GIT_HASH=0x${CANPUTE_GIT_HASH}u
+)
+
+# SystemInit() (Core/Src/system_stm32h5xx.c) sets SCB->VTOR from VECT_TAB_OFFSET, and
+# it is compiled in the STM32_Drivers object library, not the executable. Without
+# this it puts VTOR back to 0x08000000 and the first interrupt (the TIM6 HAL tick)
+# lands in the bootloader's default handler: the app hangs right after the jump.
+target_compile_definitions(STM32_Drivers PRIVATE
     VECT_TAB_OFFSET=${VECT_OFFSET}
 )
 

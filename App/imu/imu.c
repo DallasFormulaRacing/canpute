@@ -12,21 +12,22 @@ static uint8_t imu_dma_buf[IMU_FIFO_DMA_FRAME_SIZE];
 static volatile uint8_t imu_dma_in_progress = 0;
 static volatile uint8_t imu_dma_ready = 0;
 
+/* Short timeout so a missing/unplugged IMU can't hang the (high-priority) IMU task. */
+#define IMU_I2C_TIMEOUT_MS 10U
+
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp,
                              uint16_t len)
 {
-    HAL_I2C_Mem_Read(handle, ASM330LHHX_I2C_ADD_L, reg,
-                     I2C_MEMADD_SIZE_8BIT, bufp, len, HAL_MAX_DELAY);
-    return 0;
+    return (HAL_I2C_Mem_Read(handle, ASM330LHHX_I2C_ADD_L, reg,
+                             I2C_MEMADD_SIZE_8BIT, bufp, len, IMU_I2C_TIMEOUT_MS) == HAL_OK) ? 0 : -1;
 }
 
 static int32_t platform_write(void *handle, uint8_t reg,
                               const uint8_t *bufp, uint16_t len)
 {
-    HAL_I2C_Mem_Write(handle, ASM330LHHX_I2C_ADD_L, reg,
-                      I2C_MEMADD_SIZE_8BIT, (uint8_t *)bufp, len,
-                      HAL_MAX_DELAY);
-    return 0;
+    return (HAL_I2C_Mem_Write(handle, ASM330LHHX_I2C_ADD_L, reg,
+                              I2C_MEMADD_SIZE_8BIT, (uint8_t *)bufp, len,
+                              IMU_I2C_TIMEOUT_MS) == HAL_OK) ? 0 : -1;
 }
 
 static void platform_delay(uint32_t ms)
@@ -47,10 +48,21 @@ void IMU_Init(void)
     dev_ctx.handle    = &hi2c2;
 
     // Reset before use to ensure imu is in a known state and clear old data
-    asm330lhhx_reset_set(&dev_ctx, PROPERTY_ENABLE);
-    do {
-        asm330lhhx_reset_get(&dev_ctx, &rst);
-    } while (rst);
+    // If the IMU doesn't answer (not plugged in), give up instead of spinning forever.
+    if (asm330lhhx_reset_set(&dev_ctx, PROPERTY_ENABLE) != 0) {
+        return;
+    }
+    for (int tries = 0; rst && tries < 50; tries++) {
+        if (asm330lhhx_reset_get(&dev_ctx, &rst) != 0) {
+            return;
+        }
+        if (rst) {
+            platform_delay(1);
+        }
+    }
+    if (rst) {
+        return;
+    }
 
     // Verify WHO_AM_I
     asm330lhhx_device_id_get(&dev_ctx, &whoamI);
