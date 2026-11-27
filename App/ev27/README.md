@@ -43,5 +43,7 @@ Watch out:
   real corner board is 0x1F in the bootloader but 0x10-0x13 in the app. Put the
   corner UIDs in the bootloader's table with their ev27 addresses before
   flashing corners on the car.
-- **Data bit rate:** ev27-can lists the main bus at 1M/1M (TBD); canpute and the
-  bootloader run 1M/5M. Frames are sent with BRS on.
+- **Bit timing:** main bus is 1 Mbit/s CAN FD with no BRS on every device. canpute
+  uses the BMS FDCAN2 timing exactly: 40 MHz / 2, 1+15+4 tq, 80 % sample point,
+  SJW 4. The ezfd bootloader must use the same, or the BMS error-frames its
+  frames (the bootloader's upstream default is 85 %, SJW 6, 5M BRS).

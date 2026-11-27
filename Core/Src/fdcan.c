@@ -39,19 +39,22 @@ void MX_FDCAN2_Init(void)
   /* USER CODE END FDCAN2_Init 1 */
   hfdcan2.Instance = FDCAN2;
   hfdcan2.Init.ClockDivider = FDCAN_CLOCK_DIV1;
-  hfdcan2.Init.FrameFormat = FDCAN_FRAME_FD_BRS;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_FD_NO_BRS;   /* main bus: CAN FD frames, no BRS (same as BMS FDCAN2) */
   hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
   hfdcan2.Init.AutoRetransmission = ENABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
-  hfdcan2.Init.NominalPrescaler = 1;
-  hfdcan2.Init.NominalSyncJumpWidth = 6;
-  hfdcan2.Init.NominalTimeSeg1 = 33;
-  hfdcan2.Init.NominalTimeSeg2 = 6;
-  hfdcan2.Init.DataPrescaler = 1;
-  hfdcan2.Init.DataSyncJumpWidth = 2;   /* 40 MHz / (1+5+2) = 5 Mbps, matches ezfd bootloader */
-  hfdcan2.Init.DataTimeSeg1 = 5;
-  hfdcan2.Init.DataTimeSeg2 = 2;
+  /* 40 MHz PLL1Q / 2 = 20 MHz, 1+15+4 = 20 tq: 1 Mbit/s, 80 % sample point,
+     SJW 4. Exactly the BMS FDCAN2 timing (main bus 1M, no BRS, every device). */
+  hfdcan2.Init.NominalPrescaler = 2;
+  hfdcan2.Init.NominalSyncJumpWidth = 4;
+  hfdcan2.Init.NominalTimeSeg1 = 15;
+  hfdcan2.Init.NominalTimeSeg2 = 4;
+  /* Data phase unused without BRS; set equal to the nominal phase like the BMS. */
+  hfdcan2.Init.DataPrescaler = 2;
+  hfdcan2.Init.DataSyncJumpWidth = 4;
+  hfdcan2.Init.DataTimeSeg1 = 15;
+  hfdcan2.Init.DataTimeSeg2 = 4;
   hfdcan2.Init.StdFiltersNbr = 2;   /* ev27-can standard IDs (App/ev27/ev27_daq_config.h); set it in the .ioc too */
   hfdcan2.Init.ExtFiltersNbr = 2;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
@@ -121,8 +124,8 @@ void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* fdcanHandle)
     __HAL_RCC_FDCAN_CLK_DISABLE();
 
     /**FDCAN2 GPIO Configuration
-    PB12     ------> FDCAN2_RX
-    PB13     ------> FDCAN2_TX
+    PB5     ------> FDCAN2_RX
+    PB6     ------> FDCAN2_TX
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_5|GPIO_PIN_6);
 

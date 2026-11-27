@@ -99,21 +99,15 @@ void App_Hardware_Init(void) {
         Error_Handler();
     }
 
-    // Transmitter delay compensation: needed for a 5 Mbit/s data phase, or this
-    // node sees bit errors in its own data bits and destroys every FD frame it
-    // sends with data (receivers log form errors). The ezfd bootloader enables
-    // it too. Offset = DataPrescaler * DataTimeSeg1, as in ST's FDCAN examples.
-    if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan2,
-            hfdcan2.Init.DataPrescaler * hfdcan2.Init.DataTimeSeg1, 0) != HAL_OK ||
-        HAL_FDCAN_EnableTxDelayCompensation(&hfdcan2) != HAL_OK) {
-        Error_Handler();
-    }
+    // No transmitter delay compensation: the main bus runs without BRS, so there
+    // is no fast data phase to compensate (the BMS doesn't enable it either).
 
     if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK) {
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+    // RX, plus bus-off so HAL_FDCAN_ErrorStatusCallback (can_utils.c) can rejoin the bus.
+    if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_BUS_OFF, 0) != HAL_OK) {
         Error_Handler();
     }
-}
+}

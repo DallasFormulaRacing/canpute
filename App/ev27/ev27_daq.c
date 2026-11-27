@@ -242,10 +242,8 @@ int ev27_port_send(uint32_t id, const uint8_t *data, uint8_t len)
     h.TxFrameType = FDCAN_DATA_FRAME;
     h.DataLength = len_to_dlc(len);
     h.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-    /* canpute runs the data phase at 5 Mbit/s (fdcan.c), matching the ezfd
-     * bootloader, so switch bit rate like CAN_Transmit does. ev27-can lists
-     * the main bus data rate as 1 Mbit/s "TBD"; BRS on is fine either way. */
-    h.BitRateSwitch = FDCAN_BRS_ON;
+    /* Main bus: 1 Mbit/s CAN FD without BRS on every device (fdcan.c). */
+    h.BitRateSwitch = FDCAN_BRS_OFF;
     h.FDFormat = FDCAN_FD_CAN;
     h.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
     memset(buf, 0, sizeof(buf));

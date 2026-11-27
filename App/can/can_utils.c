@@ -37,7 +37,7 @@ void CAN_InitHeader(FDCAN_TxHeaderTypeDef *tx_header) {
     tx_header->IdType = FDCAN_EXTENDED_ID;
     tx_header->TxFrameType = FDCAN_DATA_FRAME;
     tx_header->ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-    tx_header->BitRateSwitch = FDCAN_BRS_ON;
+    tx_header->BitRateSwitch = FDCAN_BRS_OFF;   // main bus: no BRS
     tx_header->FDFormat = FDCAN_FD_CAN;
     tx_header->TxEventFifoControl = FDCAN_NO_TX_EVENTS;
     tx_header->MessageMarker = 0;
@@ -100,5 +100,17 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         if (canfd_rx_queueHandle != NULL) {
             (void)osMessageQueuePut(canfd_rx_queueHandle, &msg, 0, 0);   // full queue: frame dropped
         }
+    }
+}
+
+/**
+ * @brief Bus-off recovery. The FDCAN sets CCCR.INIT on bus-off and stays off the
+ * bus until software clears it; clearing it starts the standard recovery (128 x 11
+ * recessive bits) and the node comes back by itself instead of going silent until
+ * a power cycle.
+ */
+void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorStatusITs) {
+    if ((ErrorStatusITs & FDCAN_IT_BUS_OFF) != 0U && (hfdcan->Instance->PSR & FDCAN_PSR_BO) != 0U) {
+        CLEAR_BIT(hfdcan->Instance->CCCR, FDCAN_CCCR_INIT);
     }
 }
